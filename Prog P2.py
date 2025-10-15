@@ -78,7 +78,7 @@ if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
 
 def view_data():
     with st.form(key='view_data'):
-        with st.form(key='view_data'):
+        with st.form(key='view_data1'):
             st.header('Ver obras')
             st.write('Aqui você pode ver as obras na base de dados de Direito.')
             periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'])
@@ -145,3 +145,4 @@ def view_data():
 st.subheader('O que você deseja fazer?')
 st.button('Adicionar obra', on_click=add_data)
 st.button('Ver obras', on_click=view_data)
+
