@@ -1,5 +1,55 @@
 import streamlit as st
+import json
+import os
+import tempfile
+from pathlib import Path
 
+# ---------- Persistência em JSON ----------
+DB_PATH = Path("db.json")
+
+def load_db():
+    """Carrega DB do arquivo JSON (retorna dict)."""
+    if not DB_PATH.exists():
+        return {}
+    try:
+        with open(DB_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return data if isinstance(data, dict) else {}
+    except Exception as e:
+        st.warning(f"Não foi possível ler {DB_PATH}: {e}")
+        return {}
+
+def save_db(data: dict):
+    """Salva dict em JSON de forma atômica (escreve em temp e renomeia)."""
+    try:
+        tmp_fd, tmp_path = tempfile.mkstemp(dir=str(DB_PATH.parent or "."), text=True)
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as tmpf:
+            json.dump(data, tmpf, ensure_ascii=False, indent=2)
+            tmpf.flush()
+            os.fsync(tmpf.fileno())
+        os.replace(tmp_path, DB_PATH)
+    except Exception as e:
+        st.error(f"Erro ao salvar DB: {e}")
+
+def build_persistent_db():
+    """Constrói o dict com as chaves que serão persistidas."""
+    keys_to_save = [
+        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
+        'economia','teoria_constitucional','crime_sociedade',
+        'sociologia_juridica','programacao_para_advogados','teoria_geral_direito_civil',
+        'analise_economica_direito','penas_medidas_alternativas','design_institucional',
+        'organizacao_estado_direitos_fundamentais'
+    ]
+    db = {}
+    for k in keys_to_save:
+        db[k] = st.session_state.get(k, [])
+    # inclui periodos dinamicos se existirem
+    for pk in ("periodo_3","periodo_4","periodo_5"):
+        if pk in st.session_state:
+            db[pk] = st.session_state[pk]
+    return db
+
+# ---------- Seu código (mantido, com persistence integrada) ----------
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
 st.title('Base de dados de Direito 📚')
 st.subheader('Escola de Direito - FGV Direito Rio')
@@ -39,6 +89,12 @@ if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
 # flag de modo (mantém compatibilidade com seu fluxo)
 if 'mode' not in st.session_state:
     st.session_state.mode = None
+
+# ---------- Carrega DB salvo (se existir) e injeta no session_state ----------
+_initial_db = load_db()
+for k, v in _initial_db.items():
+    if isinstance(v, list) or isinstance(v, dict):
+        st.session_state[k] = v
 
 # -----------------------
 # Função add_data com periodo FORA do form e leitura segura no submit
@@ -152,6 +208,9 @@ def add_data():
                     if materia_val not in st.session_state[key]:
                         st.session_state[key][materia_val] = []
                     st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
+
+                # SALVA O DB EM DISCO (JSON)
+                save_db(build_persistent_db())
 
                 # Limpeza opcional após submit (limpa campos do form)
                 for k in ("add_nome", "add_autor", "add_materia_p1", "add_materia_p2", "add_materia_other"):
