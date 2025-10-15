@@ -1,39 +1,27 @@
 import streamlit as st
 
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
-st.title('Base de dados')
+st.title('Base de dados de Direito 📚')
+st.subtitle('Escola de Direito - FGV Direito Rio')
 
 # -----------------------
 # Inicializa as listas na sessão, se ainda não existirem
-# Período 1
-if 'teoria_do_direito' not in st.session_state:
-    st.session_state.teoria_do_direito = []
-if 'teoria_do_estado_democratico' not in st.session_state:
-    st.session_state.teoria_do_estado_democratico = []
-if 'pensamento_juridico_brasileiro' not in st.session_state:
-    st.session_state.pensamento_juridico_brasileiro = []
-if 'economia' not in st.session_state:
-    st.session_state.economia = []
-if 'teoria_constitucional' not in st.session_state:
-    st.session_state.teoria_constitucional = []
-if 'crime_sociedade' not in st.session_state:
-    st.session_state.crime_sociedade = []
- 
-# Período 2
-if 'sociologia_juridica' not in st.session_state:
-    st.session_state.sociologia_juridica = []
-if 'programacao_para_advogados' not in st.session_state:
-    st.session_state.programacao_para_advogados = []
-if 'teoria_geral_direito_civil' not in st.session_state:
-    st.session_state.teoria_geral_direito_civil = []
-if 'analise_economica_direito' not in st.session_state:
-    st.session_state.analise_economica_direito = []
-if 'penas_medidas_alternativas' not in st.session_state:
-    st.session_state.penas_medidas_alternativas = []
-if 'design_institucional' not in st.session_state:
-    st.session_state.design_institucional = []
-if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
-    st.session_state.organizacao_estado_direitos_fundamentais = []
+materias_por_periodo = {
+    '1º Período': [
+        'Teoria do Direito', 'Teoria do Estado Democrático',
+        'Pensamento Jurídico Brasileiro', 'Economia',
+        'Teoria do Direito Constitucional', 'Crime e Sociedade'
+    ],
+    '2º Período': [
+        'Sociologia Jurídica', 'Programação para Advogados',
+        'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
+        'Penas e Medidas Alternativas', 'Design Institucional',
+        'Organização do Estado e Direitos Fundamentais'
+    ]}
+for periodo, materias in materias_por_periodo.items():
+    for materia in materias:
+        if materia not in st.session_state:
+            st.session_state[materia] = []
 
 # flag de modo (mantém compatibilidade com seu fluxo)
 if 'mode' not in st.session_state:
@@ -49,7 +37,7 @@ def add_data():
     if "add_periodo_prev" not in st.session_state:
         st.session_state.add_periodo_prev = None
 
-    # *** Período fora do form (conforme solicitado) ***
+    # *** Período fora do form ***
     periodo = st.selectbox('Período', [
         '1º Período', '2º Período', '3º Período', '4º Período', '5º Período'
     ], key="add_periodo")
@@ -107,50 +95,24 @@ def add_data():
                 st.warning("Preencha 'Nome', 'Autor' e 'Matéria' antes de adicionar.")
             else:
                 # Inserção robusta usando periodo_val lido fora do form
-                if periodo_val == '1º Período':
-                    if materia_val == 'Teoria do Direito':
-                        st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Estado Democrático':
-                        st.session_state.teoria_do_estado_democratico.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Pensamento Jurídico Brasileiro':
-                        st.session_state.pensamento_juridico_brasileiro.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Economia':
-                        st.session_state.economia.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Direito Constitucional':
-                        st.session_state.teoria_constitucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Crime e Sociedade':
-                        st.session_state.crime_sociedade.append({'nome': nome_val, 'autor': autor_val})
-                    else:
-                        st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                elif periodo_val == '2º Período':
-                    if materia_val == 'Sociologia Jurídica':
-                        st.session_state.sociologia_juridica.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Programação para Advogados':
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria Geral do Direito Civil':
-                        st.session_state.teoria_geral_direito_civil.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Análise Econômica do Direito':
-                        st.session_state.analise_economica_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Penas e Medidas Alternativas':
-                        st.session_state.penas_medidas_alternativas.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Design Institucional':
-                        st.session_state.design_institucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Organização do Estado e Direitos Fundamentais':
-                        st.session_state.organizacao_estado_direitos_fundamentais.append({'nome': nome_val, 'autor': autor_val})
-                    else:
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
+                mapa_materias = {
+                    'Período 1'[
+                    'Teoria do Direito': 'teoria_do_direito', 'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
+                    'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro', 'Economia': 'economia',
+                    'Teoria do Direito Constitucional': 'teoria_constitucional', 'Crime e Sociedade': 'crime_sociedade'],
+                    'Período 2'[
+                    'Sociologia Jurídica': 'sociologia_juridica', 'Programação para Advogados': 'programacao_para_advogados',
+                    'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil', 'Análise Econômica do Direito': 'analise_economica_direito',
+                    'Penas e Medidas Alternativas': 'penas_medidas_alternativas', 'Design Institucional': 'design_institucional',
+                    'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais']}
+                periodo_val = st.mapa_materias.get(periodo, {})
+                key = periodo_val.get(materia_val)
+
+                if key:
+                    st.session_state[key].append({'nome': nome_val, 'autor': autor_val})
+                    st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
                 else:
-                    key_map = {
-                        '3º Período': 'periodo_3',
-                        '4º Período': 'periodo_4',
-                        '5º Período': 'periodo_5'
-                    }
-                    key = key_map.get(periodo_val, 'periodo_outros')
-                    if key not in st.session_state:
-                        st.session_state[key] = {}
-                    if materia_val not in st.session_state[key]:
-                        st.session_state[key][materia_val] = []
-                    st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
+                    st.warning("Matéria não encontrada no mapeamento.")
 
                 # Limpeza opcional após submit (limpa campos do form)
                 for k in ("add_nome", "add_autor", "add_materia_p1", "add_materia_p2", "add_materia_other"):
