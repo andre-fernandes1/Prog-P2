@@ -310,6 +310,55 @@ def view_data():
                 for item in st.session_state[key][materia]:
                     st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
 
+DB_FILE = "dados.json"
+
+def limpar_base_dados():
+    # Redefine todas as listas e dicionários
+    st.session_state.teoria_do_direito = []
+    st.session_state.teoria_do_estado_democratico = []
+    st.session_state.pensamento_juridico_brasileiro = []
+    st.session_state.economia = []
+    st.session_state.teoria_constitucional = []
+    st.session_state.crime_sociedade = []
+
+    st.session_state.sociologia_juridica = []
+    st.session_state.programacao_para_advogados = []
+    st.session_state.teoria_geral_direito_civil = []
+    st.session_state.analise_economica_direito = []
+    st.session_state.penas_medidas_alternativas = []
+    st.session_state.design_institucional = []
+    st.session_state.organizacao_estado_direitos_fundamentais = []
+
+    st.session_state.periodo_3 = {}
+    st.session_state.periodo_4 = {}
+    st.session_state.periodo_5 = {}
+
+    # Atualiza o arquivo JSON
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump({
+            "teoria_do_direito": [],
+            "teoria_do_estado_democratico": [],
+            "pensamento_juridico_brasileiro": [],
+            "economia": [],
+            "teoria_constitucional": [],
+            "crime_sociedade": [],
+            "sociologia_juridica": [],
+            "programacao_para_advogados": [],
+            "teoria_geral_direito_civil": [],
+            "analise_economica_direito": [],
+            "penas_medidas_alternativas": [],
+            "design_institucional": [],
+            "organizacao_estado_direitos_fundamentais": [],
+            "periodo_3": {},
+            "periodo_4": {},
+            "periodo_5": {}
+        }, f, ensure_ascii=False, indent=4)
+
+    st.success("✅ Base de dados limpa com sucesso!")
+
+# Exemplo de botão para acionar a limpeza:
+
+
 # -----------------------
 # Botões principais (mantidos no fim como no seu código)
 st.subheader('O que você deseja fazer?')
@@ -326,6 +375,9 @@ st.button('Ver obras', on_click=_set_mode_view)
 # ---------- Exportar / Importar JSON (botões solicitados) ----------
 st.write("---")
 st.markdown("### Dados (import / export)")
+
+if st.button("🧹 Limpar Base de Dados"):
+    limpar_base_dados()
 
 # Exporta o JSON atual (constroi a representação atual do DB)
 db_bytes = json.dumps(build_persistent_db(), ensure_ascii=False, indent=2).encode('utf-8')
@@ -354,3 +406,4 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
