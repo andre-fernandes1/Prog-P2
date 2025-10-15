@@ -47,25 +47,26 @@ def add_data():
     st.header('Adicionar obra')
     st.write('Aqui você pode adicionar novas obras à base de dados de Direito.')
 
-    # Garante que temos uma marca para o período anterior (para detectar mudança)
+    # --- selectbox de período FORA do form para controlar o fluxo
+    periodo = st.selectbox('Período', [
+        '1º Período', '2º Período', '3º Período', '4º Período', '5º Período'
+    ], key="add_periodo")
+
+    # Marca o período anterior para detectar mudança
     if "add_periodo_prev" not in st.session_state:
         st.session_state.add_periodo_prev = None
 
+    # Se o período mudou desde o último rerun, limpar os keys das matérias
+    if st.session_state.add_periodo_prev != st.session_state.add_periodo:
+        for k in ("add_materia_p1", "add_materia_p2", "add_materia_other", "add_nome", "add_autor"):
+            if k in st.session_state:
+                del st.session_state[k]
+        st.session_state.add_periodo_prev = st.session_state.add_periodo
+
+    # --- agora o form com os inputs que só serão submetidos quando o usuário clicar em "Adicionar"
     with st.form("form_adicionar_obra"):
         nome = st.text_input('Nome da obra', key="add_nome")
         autor = st.text_input('Autor', key="add_autor")
-        # selectbox do período tem key fixa
-        periodo = st.selectbox('Período', [
-            '1º Período', '2º Período', '3º Período', '4º Período', '5º Período'
-        ], key="add_periodo")
-
-        # Se o período mudou desde o último rerun, limpar os keys das matérias
-        if st.session_state.add_periodo_prev != st.session_state.add_periodo:
-            for k in ("add_materia_p1", "add_materia_p2", "add_materia_other"):
-                if k in st.session_state:
-                    # remove a chave para evitar reaproveitamento de estado
-                    del st.session_state[k]
-            st.session_state.add_periodo_prev = st.session_state.add_periodo
 
         # Escolhe matérias conforme o período (cada widget tem chave distinta)
         if periodo == '1º Período':
@@ -98,55 +99,7 @@ def add_data():
                 if periodo == '1º Período':
                     if materia_val == 'Teoria do Direito':
                         st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Estado Democrático':
-                        st.session_state.teoria_do_estado_democratico.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Pensamento Jurídico Brasileiro':
-                        st.session_state.pensamento_juridico_brasileiro.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Economia':
-                        st.session_state.economia.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Direito Constitucional':
-                        st.session_state.teoria_constitucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Crime e Sociedade':
-                        st.session_state.crime_sociedade.append({'nome': nome_val, 'autor': autor_val})
-                    else:
-                        st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                elif periodo == '2º Período':
-                    if materia_val == 'Sociologia Jurídica':
-                        st.session_state.sociologia_juridica.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Programação para Advogados':
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria Geral do Direito Civil':
-                        st.session_state.teoria_geral_direito_civil.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Análise Econômica do Direito':
-                        st.session_state.analise_economica_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Penas e Medidas Alternativas':
-                        st.session_state.penas_medidas_alternativas.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Design Institucional':
-                        st.session_state.design_institucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Organização do Estado e Direitos Fundamentais':
-                        st.session_state.organizacao_estado_direitos_fundamentais.append({'nome': nome_val, 'autor': autor_val})
-                    else:
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
-                else:
-                    key_map = {
-                        '3º Período': 'periodo_3',
-                        '4º Período': 'periodo_4',
-                        '5º Período': 'periodo_5'
-                    }
-                    key = key_map.get(periodo, 'periodo_outros')
-                    if key not in st.session_state:
-                        st.session_state[key] = {}
-                    if materia_val not in st.session_state[key]:
-                        st.session_state[key][materia_val] = []
-                    st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
-
-                # Opcional: limpar campos após adicionar
-                for k in ("add_nome", "add_autor", "add_materia_p1", "add_materia_p2", "add_materia_other"):
-                    if k in st.session_state:
-                        del st.session_state[k]
-
-                st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
-
+                    elif materia_val == '
 
 def view_data():
     st.header('Ver obras')
@@ -236,4 +189,5 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
 
