@@ -7,8 +7,8 @@ from pathlib import Path
 # ---------- Persistência em JSON ----------
 DB_PATH = Path("db.json")
 
-def load_db():
-    """Carrega DB do arquivo JSON (retorna dict)."""
+def load_db_raw():
+    """Retorna dict carregado do arquivo (ou {}). Não altera session_state."""
     if not DB_PATH.exists():
         return {}
     try:
@@ -49,7 +49,30 @@ def build_persistent_db():
             db[pk] = st.session_state[pk]
     return db
 
-# ---------- Seu código (mantido, com persistence integrada) ----------
+def merge_db_into_session(db: dict):
+    """
+    Merge (extend) the loaded db dict into st.session_state.
+    Lists are extended; dicts (periodo_3/4/5) are merged by extending their inner lists.
+    """
+    for k, v in db.items():
+        if isinstance(v, list):
+            if k not in st.session_state:
+                st.session_state[k] = []
+            # extend only if list items look like dicts (defensive)
+            st.session_state[k].extend(v)
+        elif isinstance(v, dict):
+            # dynamic period dict: {materia: [obra,...], ...}
+            if k not in st.session_state:
+                st.session_state[k] = {}
+            for materia, obras in v.items():
+                if materia not in st.session_state[k]:
+                    st.session_state[k][materia] = []
+                st.session_state[k][materia].extend(obras)
+        else:
+            # ignore other types
+            continue
+
+# ---------- Seu código (mantido com persistência integrada e import/export) ----------
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
 st.title('Base de dados de Direito 📚')
 st.subheader('Escola de Direito - FGV Direito Rio')
@@ -90,11 +113,10 @@ if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
 if 'mode' not in st.session_state:
     st.session_state.mode = None
 
-# ---------- Carrega DB salvo (se existir) e injeta no session_state ----------
-_initial_db = load_db()
-for k, v in _initial_db.items():
-    if isinstance(v, list) or isinstance(v, dict):
-        st.session_state[k] = v
+# ---------- Carrega DB salvo (se existir) e faz EXTEND nas listas (não sobrescreve) ----------
+_initial_db = load_db_raw()
+if _initial_db:
+    merge_db_into_session(_initial_db)
 
 # -----------------------
 # Função add_data com periodo FORA do form e leitura segura no submit
@@ -164,39 +186,47 @@ def add_data():
                 st.warning("Preencha 'Nome', 'Autor' e 'Matéria' antes de adicionar.")
             else:
                 # Inserção robusta usando periodo_val lido fora do form
-                if periodo_val == '1º Período':
-                    if materia_val == 'Teoria do Direito':
-                        st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Estado Democrático':
-                        st.session_state.teoria_do_estado_democratico.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Pensamento Jurídico Brasileiro':
-                        st.session_state.pensamento_juridico_brasileiro.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Economia':
-                        st.session_state.economia.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria do Direito Constitucional':
-                        st.session_state.teoria_constitucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Crime e Sociedade':
-                        st.session_state.crime_sociedade.append({'nome': nome_val, 'autor': autor_val})
+                # ---- aqui usamos um mapeamento para reduzir if/elif
+                mapa_local = {
+                    '1º Período': {
+                        'Teoria do Direito': 'teoria_do_direito',
+                        'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
+                        'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro',
+                        'Economia': 'economia',
+                        'Teoria do Direito Constitucional': 'teoria_constitucional',
+                        'Crime e Sociedade': 'crime_sociedade'
+                    },
+                    '2º Período': {
+                        'Sociologia Jurídica': 'sociologia_juridica',
+                        'Programação para Advogados': 'programacao_para_advogados',
+                        'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil',
+                        'Análise Econômica do Direito': 'analise_economica_direito',
+                        'Penas e Medidas Alternativas': 'penas_medidas_alternativas',
+                        'Design Institucional': 'design_institucional',
+                        'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
+                    }
+                }
+
+                if periodo_val in mapa_local:
+                    key = mapa_local[periodo_val].get(materia_val)
+                    if key:
+                        # garante que a lista existe
+                        if key not in st.session_state:
+                            st.session_state[key] = []
+                        st.session_state[key].append({'nome': nome_val, 'autor': autor_val})
+                        where_inserted = key
                     else:
-                        st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                elif periodo_val == '2º Período':
-                    if materia_val == 'Sociologia Jurídica':
-                        st.session_state.sociologia_juridica.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Programação para Advogados':
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Teoria Geral do Direito Civil':
-                        st.session_state.teoria_geral_direito_civil.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Análise Econômica do Direito':
-                        st.session_state.analise_economica_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Penas e Medidas Alternativas':
-                        st.session_state.penas_medidas_alternativas.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Design Institucional':
-                        st.session_state.design_institucional.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == 'Organização do Estado e Direitos Fundamentais':
-                        st.session_state.organizacao_estado_direitos_fundamentais.append({'nome': nome_val, 'autor': autor_val})
-                    else:
-                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
+                        # fallback: se materia não estiver mapeada, adiciona numa lista padrão do período
+                        if periodo_val == '1º Período':
+                            st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
+                            where_inserted = 'teoria_do_direito'
+                        elif periodo_val == '2º Período':
+                            st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
+                            where_inserted = 'programacao_para_advogados'
+                        else:
+                            where_inserted = 'periodo_outros'
                 else:
+                    # períodos 3/4/5: guarda em dict dinamico
                     key_map = {
                         '3º Período': 'periodo_3',
                         '4º Período': 'periodo_4',
@@ -208,6 +238,7 @@ def add_data():
                     if materia_val not in st.session_state[key]:
                         st.session_state[key][materia_val] = []
                     st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
+                    where_inserted = f"{key}:{materia_val}"
 
                 # SALVA O DB EM DISCO (JSON)
                 save_db(build_persistent_db())
@@ -217,10 +248,10 @@ def add_data():
                     if k in st.session_state:
                         del st.session_state[k]
 
-                st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
+                st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso! (salva em {where_inserted})')
 
 # -----------------------
-# Função view_data (mantida, mas recomendo usar a versão com keys que te enviei antes)
+# Função view_data (mantida, mas com acesso seguro via st.session_state.get)
 def view_data():
     st.header('Ver obras')
     st.write('Aqui você pode ver as obras na base de dados de Direito.')
@@ -230,24 +261,22 @@ def view_data():
                                           'Pensamento Jurídico Brasileiro', 'Economia',
                                           'Teoria do Direito Constitucional', 'Crime e Sociedade'],
                                key='view_materia_p1')
-        if materia == 'Teoria do Direito':
-            for item in st.session_state.teoria_do_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Estado Democrático':
-            for item in st.session_state.teoria_do_estado_democratico:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Pensamento Jurídico Brasileiro':
-            for item in st.session_state.pensamento_juridico_brasileiro:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Economia':
-            for item in st.session_state.economia:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Direito Constitucional':
-            for item in st.session_state.teoria_constitucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Crime e Sociedade':
-            for item in st.session_state.crime_sociedade:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
+        map_p1 = {
+            'Teoria do Direito': 'teoria_do_direito',
+            'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
+            'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro',
+            'Economia': 'economia',
+            'Teoria do Direito Constitucional': 'teoria_constitucional',
+            'Crime e Sociedade': 'crime_sociedade'
+        }
+        key_list = map_p1.get(materia)
+        obras = st.session_state.get(key_list, [])
+        if obras:
+            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+            for i, item in enumerate(obras, start=1):
+                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+        else:
+            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
         
     elif periodo == '2º Período':
         materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
@@ -255,27 +284,23 @@ def view_data():
                                           'Penas e Medidas Alternativas', 'Design Institucional',
                                           'Organização do Estado e Direitos Fundamentais'],
                                key='view_materia_p2')
-        if materia == 'Sociologia Jurídica':
-            for item in st.session_state.sociologia_juridica:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Programação para Advogados':
-            for item in st.session_state.programacao_para_advogados:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria Geral do Direito Civil':
-            for item in st.session_state.teoria_geral_direito_civil:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Análise Econômica do Direito':
-            for item in st.session_state.analise_economica_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Penas e Medidas Alternativas':
-            for item in st.session_state.penas_medidas_alternativas:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Design Institucional':
-            for item in st.session_state.design_institucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Organização do Estado e Direitos Fundamentais':
-            for item in st.session_state.organizacao_estado_direitos_fundamentais:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
+        map_p2 = {
+            'Sociologia Jurídica': 'sociologia_juridica',
+            'Programação para Advogados': 'programacao_para_advogados',
+            'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil',
+            'Análise Econômica do Direito': 'analise_economica_direito',
+            'Penas e Medidas Alternativas': 'penas_medidas_alternativas',
+            'Design Institucional': 'design_institucional',
+            'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
+        }
+        key_list = map_p2.get(materia)
+        obras = st.session_state.get(key_list, [])
+        if obras:
+            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+            for i, item in enumerate(obras, start=1):
+                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+        else:
+            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
     else:
         materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
         if materia:
@@ -297,6 +322,30 @@ def _set_mode_view():
 
 st.button('Adicionar obra', on_click=_set_mode_add)
 st.button('Ver obras', on_click=_set_mode_view)
+
+# ---------- Exportar / Importar JSON (botões solicitados) ----------
+st.write("---")
+st.markdown("### Dados (import / export)")
+
+# Exporta o JSON atual (constroi a representação atual do DB)
+db_bytes = json.dumps(build_persistent_db(), ensure_ascii=False, indent=2).encode('utf-8')
+st.download_button(label="Exportar DB (JSON)", data=db_bytes, file_name="db.json", mime="application/json")
+
+# Importa um JSON e faz merge/extend
+uploaded = st.file_uploader("Importar DB (JSON) — será *mesclado* com os dados atuais", type=['json'])
+if uploaded is not None:
+    try:
+        content = uploaded.read().decode('utf-8')
+        parsed = json.loads(content)
+        if not isinstance(parsed, dict):
+            st.error("Arquivo JSON inválido: deve ser um objeto/dicionário no topo.")
+        else:
+            # faz merge into session (extend)
+            merge_db_into_session(parsed)
+            save_db(build_persistent_db())
+            st.success("Arquivo importado e mesclado com sucesso! (dados salvos em db.json)")
+    except Exception as e:
+        st.error(f"Erro ao importar arquivo: {e}")
 
 # Renderiza a tela correspondente com base na flag persistente
 if st.session_state.mode == 'add':
