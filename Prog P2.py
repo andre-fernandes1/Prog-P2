@@ -47,41 +47,54 @@ def add_data():
     st.header('Adicionar obra')
     st.write('Aqui você pode adicionar novas obras à base de dados de Direito.')
 
-    # Usamos um form para manter os inputs até o usuário clicar em "Adicionar"
+    # Garante que temos uma marca para o período anterior (para detectar mudança)
+    if "add_periodo_prev" not in st.session_state:
+        st.session_state.add_periodo_prev = None
+
     with st.form("form_adicionar_obra"):
         nome = st.text_input('Nome da obra', key="add_nome")
         autor = st.text_input('Autor', key="add_autor")
-        periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key="add_periodo")
+        # selectbox do período tem key fixa
+        periodo = st.selectbox('Período', [
+            '1º Período', '2º Período', '3º Período', '4º Período', '5º Período'
+        ], key="add_periodo")
+
+        # Se o período mudou desde o último rerun, limpar os keys das matérias
+        if st.session_state.add_periodo_prev != st.session_state.add_periodo:
+            for k in ("add_materia_p1", "add_materia_p2", "add_materia_other"):
+                if k in st.session_state:
+                    # remove a chave para evitar reaproveitamento de estado
+                    del st.session_state[k]
+            st.session_state.add_periodo_prev = st.session_state.add_periodo
 
         # Escolhe matérias conforme o período (cada widget tem chave distinta)
         if periodo == '1º Período':
-            materia = st.selectbox('Matéria', ['Teoria do Direito', 'Teoria do Estado Democrático',
-                                              'Pensamento Jurídico Brasileiro', 'Economia',
-                                              'Teoria do Direito Constitucional', 'Crime e Sociedade'],
-                                   key="add_materia_p1")
+            materia = st.selectbox('Matéria', [
+                'Teoria do Direito', 'Teoria do Estado Democrático',
+                'Pensamento Jurídico Brasileiro', 'Economia',
+                'Teoria do Direito Constitucional', 'Crime e Sociedade'
+            ], key="add_materia_p1")
         elif periodo == '2º Período':
-            materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
-                                              'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
-                                              'Penas e Medidas Alternativas', 'Design Institucional',
-                                              'Organização do Estado e Direitos Fundamentais'],
-                                   key="add_materia_p2")
+            materia = st.selectbox('Matéria', [
+                'Sociologia Jurídica', 'Programação para Advogados',
+                'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
+                'Penas e Medidas Alternativas', 'Design Institucional',
+                'Organização do Estado e Direitos Fundamentais'
+            ], key="add_materia_p2")
         else:
-            # Para períodos 3/4/5 deixo como input livre (cada chave distinta)
             materia = st.text_input('Matéria (digite o nome da matéria)', key="add_materia_other")
 
-        # Botão de submit do form: só quando clicado o bloco abaixo executa
         submitted = st.form_submit_button('Adicionar')
 
         if submitted:
             nome_val = st.session_state.get("add_nome", "").strip()
             autor_val = st.session_state.get("add_autor", "").strip()
-            # pega matéria a partir da variável local 'materia' (string) — já funciona independentemente da key
             materia_val = materia.strip() if isinstance(materia, str) else materia
 
             if not nome_val or not autor_val or not materia_val:
                 st.warning("Preencha 'Nome', 'Autor' e 'Matéria' antes de adicionar.")
             else:
-                # Agora, somente aqui, fazemos o append à lista correta
+                # Apêndices mantidos igual ao seu código original
                 if periodo == '1º Período':
                     if materia_val == 'Teoria do Direito':
                         st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
@@ -96,7 +109,6 @@ def add_data():
                     elif materia_val == 'Crime e Sociedade':
                         st.session_state.crime_sociedade.append({'nome': nome_val, 'autor': autor_val})
                     else:
-                        # caso usuário digite algo diferente (segurança)
                         st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
                 elif periodo == '2º Período':
                     if materia_val == 'Sociologia Jurídica':
@@ -116,7 +128,6 @@ def add_data():
                     else:
                         st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
                 else:
-                    # Para períodos 3/4/5: cria uma lista nova na sessão dinamicamente
                     key_map = {
                         '3º Período': 'periodo_3',
                         '4º Período': 'periodo_4',
@@ -129,7 +140,13 @@ def add_data():
                         st.session_state[key][materia_val] = []
                     st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
 
+                # Opcional: limpar campos após adicionar
+                for k in ("add_nome", "add_autor", "add_materia_p1", "add_materia_p2", "add_materia_other"):
+                    if k in st.session_state:
+                        del st.session_state[k]
+
                 st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
+
 
 def view_data():
     st.header('Ver obras')
@@ -219,3 +236,4 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
