@@ -277,7 +277,18 @@ def view_data():
                 st.write(f"{i}. **{item['nome']}** — {item['autor']}")
         else:
             st.info(f"Nenhuma obra cadastrada em '{materia}'.")
-        
+        if materia == 'Teoria do Direito':
+            st.write('Prof. Fernando Leal')
+        elif materia == 'Teoria do Estado Democrático':
+            st.write('Prof. Leandro Molhano')
+        elif materia == 'Teoria do Direito Constitucional':
+            st.write('Prof. Felipe Fonte')
+        elif materia == 'Crime e Sociedade':
+            st.write('Profs. Fernanda Prates e Thiago Bottino')
+        elif materia == 'Economia':
+            st.write('Prof. Leonardo Costa')
+        elif materia == 'Pensamento Jurídico Brasileiro':
+            st.write('Profª. Elisa Cruz')
     elif periodo == '2º Período':
         materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
                                           'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
@@ -301,6 +312,20 @@ def view_data():
                 st.write(f"{i}. **{item['nome']}** — {item['autor']}")
         else:
             st.info(f"Nenhuma obra cadastrada em '{materia}'.")
+        if materia == 'Sociologia Jurídica':
+            st.write('Prof. Camila Alves')
+        elif materia == 'Programação para Advogados':
+            st.write('Prof. Josir Gomes')
+        elif materia == 'Teoria Geral do Direito Civil':
+            st.write('Prof. Filipe Medon')
+        elif materia == 'Análise Econômica do Direito':
+            st.write('Prof. Paulo Mello')
+        elif materia == 'Penas e Medidas Alternativas':
+            st.write('Prof. André Mendes')
+        elif materia == 'Design Institucional':
+            st.write('Prof. Wallace Corbo')
+        elif materia == 'Organização do Estado e Direitos Fundamentais':
+            st.write('Profs. Alvaro Palma, Gustavo Schimidt e Guilherme Aleixo')
     else:
         materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
         if materia:
@@ -406,4 +431,3 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
-
