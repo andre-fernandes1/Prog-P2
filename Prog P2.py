@@ -99,7 +99,27 @@ def add_data():
                 if periodo == '1º Período':
                     if materia_val == 'Teoria do Direito':
                         st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                    elif materia_val == '
+                    elif materia_val == 'Organização do Estado e Direitos Fundamentais':
+                        st.session_state.organizacao_estado_direitos_fundamentais.append({'nome': nome_val, 'autor': autor_val})
+                    else:
+                        st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
+                else:
+                    # Para períodos 3/4/5: cria uma lista nova na sessão dinamicamente
+                    key_map = {
+                        '3º Período': 'periodo_3',
+                        '4º Período': 'periodo_4',
+                        '5º Período': 'periodo_5'
+                    }
+                    key = key_map.get(periodo, 'periodo_outros')
+                    if key not in st.session_state:
+                        st.session_state[key] = {}
+                    if materia_val not in st.session_state[key]:
+                        st.session_state[key][materia_val] = []
+                    st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
+
+                st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
+
+
 
 def view_data():
     st.header('Ver obras')
@@ -189,5 +209,3 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
-
-
