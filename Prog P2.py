@@ -124,69 +124,107 @@ def add_data():
 def view_data():
     st.header('Ver obras')
     st.write('Aqui você pode ver as obras na base de dados de Direito.')
-    periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key='view_periodo')
+
+    # select do período com key fixa
+    periodo = st.selectbox(
+        'Período',
+        ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'],
+        key='view_periodo'
+    )
+
+    # Para 1º e 2º período usamos selectboxes com keys distintas
     if periodo == '1º Período':
-        materia = st.selectbox('Matéria', ['Teoria do Direito', 'Teoria do Estado Democrático',
-                                          'Pensamento Jurídico Brasileiro', 'Economia',
-                                          'Teoria do Direito Constitucional', 'Crime e Sociedade'])
-        if materia == 'Teoria do Direito':
-            st.write('Exibindo obras para Teoria do Direito')
-            for item in st.session_state.teoria_do_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Estado Democrático':
-            st.write('Exibindo obras para Teoria do Estado Democrático')
-            for item in st.session_state.teoria_do_estado_democratico:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Pensamento Jurídico Brasileiro':
-            st.write('Exibindo obras para Pensamento Jurídico Brasileiro')
-            for item in st.session_state.pensamento_juridico_brasileiro:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Economia':
-            st.write('Exibindo obras para Economia')
-            for item in st.session_state.economia:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Direito Constitucional':
-            st.write('Exibindo obras para Teoria do Direito Constitucional')
-            for item in st.session_state.teoria_constitucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Crime e Sociedade':
-            st.write('Exibindo obras para Crime e Sociedade')
-            for item in st.session_state.crime_sociedade:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        
+        materia = st.selectbox('Matéria', [
+            'Teoria do Direito', 'Teoria do Estado Democrático',
+            'Pensamento Jurídico Brasileiro', 'Economia',
+            'Teoria do Direito Constitucional', 'Crime e Sociedade'
+        ], key='view_materia_p1')
+
+        # Mapear matéria para a lista correta e mostrar conteúdos com segurança
+        map_p1 = {
+            'Teoria do Direito': 'teoria_do_direito',
+            'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
+            'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro',
+            'Economia': 'economia',
+            'Teoria do Direito Constitucional': 'teoria_constitucional',
+            'Crime e Sociedade': 'crime_sociedade'
+        }
+        key_list = map_p1.get(materia)
+        if key_list and key_list in st.session_state:
+            obras = st.session_state[key_list]
+            if obras:
+                st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+                for i, item in enumerate(obras, start=1):
+                    st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+            else:
+                st.info(f"Nenhuma obra cadastrada em '{materia}'. (lista vazia)")
+        else:
+            st.info("Nenhuma obra encontrada para essa matéria.")
+
     elif periodo == '2º Período':
-        materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
-                                          'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
-                                          'Penas e Medidas Alternativas', 'Design Institucional',
-                                          'Organização do Estado e Direitos Fundamentais'])
-        if materia == 'Sociologia Jurídica':
-            st.write('Exibindo obras para Sociologia Jurídica')
-            for item in st.session_state.sociologia_juridica:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Programação para Advogados':
-            st.write('Exibindo obras para Programação para Advogados')
-            for item in st.session_state.programacao_para_advogados:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria Geral do Direito Civil':
-            st.write('Exibindo obras para Teoria Geral do Direito Civil')
-            for item in st.session_state.teoria_geral_direito_civil:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Análise Econômica do Direito':
-            st.write('Exibindo obras para Análise Econômica do Direito')
-            for item in st.session_state.analise_economica_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Penas e Medidas Alternativas':
-            st.write('Exibindo obras para Penas e Medidas Alternativas')
-            for item in st.session_state.penas_medidas_alternativas:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Design Institucional':
-            st.write('Exibindo obras para Design Institucional')
-            for item in st.session_state.design_institucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Organização do Estado e Direitos Fundamentais':
-            st.write('Exibindo obras para Organização do Estado e Direitos Fundamentais')
-            for item in st.session_state.organizacao_estado_direitos_fundamentais:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
+        materia = st.selectbox('Matéria', [
+            'Sociologia Jurídica', 'Programação para Advogados',
+            'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
+            'Penas e Medidas Alternativas', 'Design Institucional',
+            'Organização do Estado e Direitos Fundamentais'
+        ], key='view_materia_p2')
+
+        map_p2 = {
+            'Sociologia Jurídica': 'sociologia_juridica',
+            'Programação para Advogados': 'programacao_para_advogados',
+            'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil',
+            'Análise Econômica do Direito': 'analise_economica_direito',
+            'Penas e Medidas Alternativas': 'penas_medidas_alternativas',
+            'Design Institucional': 'design_institucional',
+            'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
+        }
+        key_list = map_p2.get(materia)
+        if key_list and key_list in st.session_state:
+            obras = st.session_state[key_list]
+            if obras:
+                st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+                for i, item in enumerate(obras, start=1):
+                    st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+            else:
+                st.info(f"Nenhuma obra cadastrada em '{materia}'. (lista vazia)")
+        else:
+            st.info("Nenhuma obra encontrada para essa matéria.")
+
+    else:
+        # períodos 3/4/5 — input livre com key própria
+        materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
+        if materia:
+            key_map = {'3º Período': 'periodo_3', '4º Período': 'periodo_4', '5º Período': 'periodo_5'}
+            key = key_map.get(periodo, None)
+            if key and key in st.session_state and materia in st.session_state[key]:
+                obras = st.session_state[key][materia]
+                if obras:
+                    st.write(f'Exibindo {len(obras)} obra(s) para {materia} em {periodo}:')
+                    for i, item in enumerate(obras, start=1):
+                        st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+                else:
+                    st.info("Nenhuma obra encontrada para essa matéria neste período.")
+            else:
+                st.info("Nenhuma obra encontrada para essa matéria neste período.")
+
+    # --- debug auxiliar (remova depois) ---
+    # mostra rapidamente quantos itens existem em cada lista para diagnosticar
+    if st.checkbox("Mostrar contagem das listas (debug)", key="debug_counts"):
+        st.write("Contagem das listas salvas na sessão:")
+        keys = [
+            'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
+            'economia','teoria_constitucional','crime_sociedade',
+            'sociologia_juridica','programacao_para_advogados','teoria_geral_direito_civil',
+            'analise_economica_direito','penas_medidas_alternativas','design_institucional',
+            'organizacao_estado_direitos_fundamentais'
+        ]
+        for k in keys:
+            st.write(f"{k}: {len(st.session_state.get(k, []))}")
+        # checa periodos dinamicos
+        for pk in ("periodo_3","periodo_4","periodo_5"):
+            if pk in st.session_state:
+                st.write(f"{pk}: { {m: len(lst) for m, lst in st.session_state[pk].items()} }")
+
 
 # -----------------------
 # Botões principais (mantidos no fim como no seu código)
@@ -209,3 +247,4 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
