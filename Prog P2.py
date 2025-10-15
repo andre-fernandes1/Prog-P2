@@ -1,7 +1,8 @@
 import streamlit as st
 
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
-st.title('Base de dados')
+st.title('Base de dados de Direito 📚')
+st.subheader('Escola de Direito - FGV Direito Rio')
 
 # -----------------------
 # Inicializa as listas na sessão, se ainda não existirem
