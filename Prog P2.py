@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
 st.title('Base de dados de Direito 📚')
-st.subtitle('Escola de Direito - FGV Direito Rio')
+st.header('Escola de Direito - FGV Direito Rio')
 
 # -----------------------
 # Inicializa as listas na sessão, se ainda não existirem
@@ -207,3 +207,4 @@ elif st.session_state.mode == 'view':
     view_data()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
