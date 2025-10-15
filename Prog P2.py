@@ -4,8 +4,8 @@ import os
 import tempfile
 from pathlib import Path
 
-# ---------- Persistência em JSON ----------
-DB_PATH = Path("db.json")
+# ---------- Config / DB ----------
+DB_PATH = Path("db.json")  # arquivo de persistência
 
 def load_db_raw():
     """Retorna dict carregado do arquivo (ou {}). Não altera session_state."""
@@ -58,7 +58,6 @@ def merge_db_into_session(db: dict):
         if isinstance(v, list):
             if k not in st.session_state:
                 st.session_state[k] = []
-            # extend only if list items look like dicts (defensive)
             st.session_state[k].extend(v)
         elif isinstance(v, dict):
             # dynamic period dict: {materia: [obra,...], ...}
@@ -72,51 +71,69 @@ def merge_db_into_session(db: dict):
             # ignore other types
             continue
 
-# ---------- Seu código (mantido com persistência integrada e import/export) ----------
+# ---------- Inicialização segura (trecho que você mandou) ----------
+DB_FILE = str(DB_PATH)  # compatibilidade com nomes que você usava
+
+# Inicializa variáveis vazias no session_state
+def inicializar_base():
+    if "teoria_do_direito" not in st.session_state:
+        st.session_state.teoria_do_direito = []
+    if "teoria_do_estado_democratico" not in st.session_state:
+        st.session_state.teoria_do_estado_democratico = []
+    if "pensamento_juridico_brasileiro" not in st.session_state:
+        st.session_state.pensamento_juridico_brasileiro = []
+    if "economia" not in st.session_state:
+        st.session_state.economia = []
+    if "teoria_constitucional" not in st.session_state:
+        st.session_state.teoria_constitucional = []
+    if "crime_sociedade" not in st.session_state:
+        st.session_state.crime_sociedade = []
+
+    if "sociologia_juridica" not in st.session_state:
+        st.session_state.sociologia_juridica = []
+    if "programacao_para_advogados" not in st.session_state:
+        st.session_state.programacao_para_advogados = []
+    if "teoria_geral_direito_civil" not in st.session_state:
+        st.session_state.teoria_geral_direito_civil = []
+    if "analise_economica_direito" not in st.session_state:
+        st.session_state.analise_economica_direito = []
+    if "penas_medidas_alternativas" not in st.session_state:
+        st.session_state.penas_medidas_alternativas = []
+    if "design_institucional" not in st.session_state:
+        st.session_state.design_institucional = []
+    if "organizacao_estado_direitos_fundamentais" not in st.session_state:
+        st.session_state.organizacao_estado_direitos_fundamentais = []
+
+    if "periodo_3" not in st.session_state:
+        st.session_state.periodo_3 = {}
+    if "periodo_4" not in st.session_state:
+        st.session_state.periodo_4 = {}
+    if "periodo_5" not in st.session_state:
+        st.session_state.periodo_5 = {}
+
+# Carrega do JSON apenas uma vez
+def carregar_dados():
+    # usa flag para evitar duplicações entre reruns
+    if st.session_state.get("dados_carregados", False):
+        return
+    if DB_PATH.exists():
+        data = load_db_raw()
+        if data:
+            merge_db_into_session(data)
+    st.session_state.dados_carregados = True  # 🔐 garante que não duplica
+
+# ---- Uso no início do app ----
+inicializar_base()
+carregar_dados()
+
+# ---------- Seu UI (mantido, com persistência integrada) ----------
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
 st.title('Base de dados de Direito 📚')
 st.subheader('Escola de Direito - FGV Direito Rio')
 
-# -----------------------
-# Inicializa as listas na sessão, se ainda não existirem
-# Período 1
-if 'teoria_do_direito' not in st.session_state:
-    st.session_state.teoria_do_direito = []
-if 'teoria_do_estado_democratico' not in st.session_state:
-    st.session_state.teoria_do_estado_democratico = []
-if 'pensamento_juridico_brasileiro' not in st.session_state:
-    st.session_state.pensamento_juridico_brasileiro = []
-if 'economia' not in st.session_state:
-    st.session_state.economia = []
-if 'teoria_constitucional' not in st.session_state:
-    st.session_state.teoria_constitucional = []
-if 'crime_sociedade' not in st.session_state:
-    st.session_state.crime_sociedade = []
- 
-# Período 2
-if 'sociologia_juridica' not in st.session_state:
-    st.session_state.sociologia_juridica = []
-if 'programacao_para_advogados' not in st.session_state:
-    st.session_state.programacao_para_advogados = []
-if 'teoria_geral_direito_civil' not in st.session_state:
-    st.session_state.teoria_geral_direito_civil = []
-if 'analise_economica_direito' not in st.session_state:
-    st.session_state.analise_economica_direito = []
-if 'penas_medidas_alternativas' not in st.session_state:
-    st.session_state.penas_medidas_alternativas = []
-if 'design_institucional' not in st.session_state:
-    st.session_state.design_institucional = []
-if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
-    st.session_state.organizacao_estado_direitos_fundamentais = []
-
 # flag de modo (mantém compatibilidade com seu fluxo)
 if 'mode' not in st.session_state:
     st.session_state.mode = None
-
-# ---------- Carrega DB salvo (se existir) e faz EXTEND nas listas (não sobrescreve) ----------
-_initial_db = load_db_raw()
-if _initial_db:
-    merge_db_into_session(_initial_db)
 
 # -----------------------
 # Função add_data com periodo FORA do form e leitura segura no submit
@@ -335,8 +352,7 @@ def view_data():
                 for item in st.session_state[key][materia]:
                     st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
 
-DB_FILE = "dados.json"
-
+# ---------- Função para limpar a base de dados ----------
 def limpar_base_dados():
     # Redefine todas as listas e dicionários
     st.session_state.teoria_do_direito = []
@@ -358,31 +374,10 @@ def limpar_base_dados():
     st.session_state.periodo_4 = {}
     st.session_state.periodo_5 = {}
 
-    # Atualiza o arquivo JSON
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump({
-            "teoria_do_direito": [],
-            "teoria_do_estado_democratico": [],
-            "pensamento_juridico_brasileiro": [],
-            "economia": [],
-            "teoria_constitucional": [],
-            "crime_sociedade": [],
-            "sociologia_juridica": [],
-            "programacao_para_advogados": [],
-            "teoria_geral_direito_civil": [],
-            "analise_economica_direito": [],
-            "penas_medidas_alternativas": [],
-            "design_institucional": [],
-            "organizacao_estado_direitos_fundamentais": [],
-            "periodo_3": {},
-            "periodo_4": {},
-            "periodo_5": {}
-        }, f, ensure_ascii=False, indent=4)
+    # Salva o arquivo JSON vazio de forma consistente
+    save_db(build_persistent_db())
 
     st.success("✅ Base de dados limpa com sucesso!")
-
-# Exemplo de botão para acionar a limpeza:
-
 
 # -----------------------
 # Botões principais (mantidos no fim como no seu código)
