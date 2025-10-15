@@ -1,78 +1,36 @@
-import streamlit as st
-
-st.set_page_config(page_title='Base de dados de Direito', layout='centered')
-st.title('Base de dados')
-
-# -----------------------
-# Inicializa as listas na sessão, se ainda não existirem
-# (mantive sua estrutura de nomes)
-# Período 1
-if 'teoria_do_direito' not in st.session_state:
-    st.session_state.teoria_do_direito = []
-if 'teoria_do_estado_democratico' not in st.session_state:
-    st.session_state.teoria_do_estado_democratico = []
-if 'pensamento_juridico_brasileiro' not in st.session_state:
-    st.session_state.pensamento_juridico_brasileiro = []
-if 'economia' not in st.session_state:
-    st.session_state.economia = []
-if 'teoria_constitucional' not in st.session_state:
-    st.session_state.teoria_constitucional = []
-if 'crime_sociedade' not in st.session_state:
-    st.session_state.crime_sociedade = []
- 
-# Período 2
-if 'sociologia_juridica' not in st.session_state:
-    st.session_state.sociologia_juridica = []
-if 'programacao_para_advogados' not in st.session_state:
-    st.session_state.programacao_para_advogados = []
-if 'teoria_geral_direito_civil' not in st.session_state:
-    st.session_state.teoria_geral_direito_civil = []
-if 'analise_economica_direito' not in st.session_state:
-    st.session_state.analise_economica_direito = []
-if 'penas_medidas_alternativas' not in st.session_state:
-    st.session_state.penas_medidas_alternativas = []
-if 'design_institucional' not in st.session_state:
-    st.session_state.design_institucional = []
-if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
-    st.session_state.organizacao_estado_direitos_fundamentais = []
-
-# -----------------------
-# Mínima adição: flag para manter o modo entre reruns
-if 'mode' not in st.session_state:
-    st.session_state.mode = None  # valores possíveis: None, 'add', 'view'
-
-# -----------------------
-# Funções de UI (mantive nomes e estrutura)
 def add_data():
     st.header('Adicionar obra')
     st.write('Aqui você pode adicionar novas obras à base de dados de Direito.')
 
     # Usamos um form para manter os inputs até o usuário clicar em "Adicionar"
     with st.form("form_adicionar_obra"):
-        nome = st.text_input('Nome da obra')
-        autor = st.text_input('Autor')
-        periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'])
+        nome = st.text_input('Nome da obra', key="add_nome")
+        autor = st.text_input('Autor', key="add_autor")
+        periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key="add_periodo")
 
-        # Escolhe matérias conforme o período (apenas opções já existentes)
+        # Escolhe matérias conforme o período (cada widget tem chave distinta)
         if periodo == '1º Período':
             materia = st.selectbox('Matéria', ['Teoria do Direito', 'Teoria do Estado Democrático',
                                               'Pensamento Jurídico Brasileiro', 'Economia',
-                                              'Teoria do Direito Constitucional', 'Crime e Sociedade'])
+                                              'Teoria do Direito Constitucional', 'Crime e Sociedade'],
+                                   key="add_materia_p1")
         elif periodo == '2º Período':
             materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
                                               'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
                                               'Penas e Medidas Alternativas', 'Design Institucional',
-                                              'Organização do Estado e Direitos Fundamentais'])
+                                              'Organização do Estado e Direitos Fundamentais'],
+                                   key="add_materia_p2")
         else:
-            # Para períodos 3/4/5 deixo como input livre (mantendo estrutura simples)
-            materia = st.text_input('Matéria (digite o nome da matéria)')
+            # Para períodos 3/4/5 deixo como input livre (cada chave distinta)
+            materia = st.text_input('Matéria (digite o nome da matéria)', key="add_materia_other")
 
         # Botão de submit do form: só quando clicado o bloco abaixo executa
         submitted = st.form_submit_button('Adicionar')
 
         if submitted:
-            nome_val = nome.strip()
-            autor_val = autor.strip()
+            nome_val = st.session_state.get("add_nome", "").strip()
+            autor_val = st.session_state.get("add_autor", "").strip()
+            # pega matéria a partir da variável local 'materia' (string) — já funciona independentemente da key
             materia_val = materia.strip() if isinstance(materia, str) else materia
 
             if not nome_val or not autor_val or not materia_val:
@@ -127,92 +85,3 @@ def add_data():
                     st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
 
                 st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso!')
-
-def view_data():
-    st.header('Ver obras')
-    st.write('Aqui você pode ver as obras na base de dados de Direito.')
-    periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key='view_periodo')
-    if periodo == '1º Período':
-        materia = st.selectbox('Matéria', ['Teoria do Direito', 'Teoria do Estado Democrático',
-                                          'Pensamento Jurídico Brasileiro', 'Economia',
-                                          'Teoria do Direito Constitucional', 'Crime e Sociedade'])
-        if materia == 'Teoria do Direito':
-            st.write('Exibindo obras para Teoria do Direito')
-            for item in st.session_state.teoria_do_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Estado Democrático':
-            st.write('Exibindo obras para Teoria do Estado Democrático')
-            for item in st.session_state.teoria_do_estado_democratico:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Pensamento Jurídico Brasileiro':
-            st.write('Exibindo obras para Pensamento Jurídico Brasileiro')
-            for item in st.session_state.pensamento_juridico_brasileiro:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Economia':
-            st.write('Exibindo obras para Economia')
-            for item in st.session_state.economia:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria do Direito Constitucional':
-            st.write('Exibindo obras para Teoria do Direito Constitucional')
-            for item in st.session_state.teoria_constitucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Crime e Sociedade':
-            st.write('Exibindo obras para Crime e Sociedade')
-            for item in st.session_state.crime_sociedade:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        
-    elif periodo == '2º Período':
-        materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
-                                          'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
-                                          'Penas e Medidas Alternativas', 'Design Institucional',
-                                          'Organização do Estado e Direitos Fundamentais'])
-        if materia == 'Sociologia Jurídica':
-            st.write('Exibindo obras para Sociologia Jurídica')
-            for item in st.session_state.sociologia_juridica:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Programação para Advogados':
-            st.write('Exibindo obras para Programação para Advogados')
-            for item in st.session_state.programacao_para_advogados:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria Geral do Direito Civil':
-            st.write('Exibindo obras para Teoria Geral do Direito Civil')
-            for item in st.session_state.teoria_geral_direito_civil:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Análise Econômica do Direito':
-            st.write('Exibindo obras para Análise Econômica do Direito')
-            for item in st.session_state.analise_economica_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Penas e Medidas Alternativas':
-            st.write('Exibindo obras para Penas e Medidas Alternativas')
-            for item in st.session_state.penas_medidas_alternativas:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Design Institucional':
-            st.write('Exibindo obras para Design Institucional')
-            for item in st.session_state.design_institucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Organização do Estado e Direitos Fundamentais':
-            st.write('Exibindo obras para Organização do Estado e Direitos Fundamentais')
-            for item in st.session_state.organizacao_estado_direitos_fundamentais:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-
-# -----------------------
-# Botões principais (mantidos no fim como no seu código)
-st.subheader('O que você deseja fazer?')
-
-# Pequenas funções apenas para setar o modo — mínima mudança para preservar estrutura
-def _set_mode_add():
-    st.session_state.mode = 'add'
-
-def _set_mode_view():
-    st.session_state.mode = 'view'
-
-st.button('Adicionar obra', on_click=_set_mode_add)
-st.button('Ver obras', on_click=_set_mode_view)
-
-# Renderiza a tela correspondente com base na flag persistente
-if st.session_state.mode == 'add':
-    add_data()
-elif st.session_state.mode == 'view':
-    view_data()
-else:
-    st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
