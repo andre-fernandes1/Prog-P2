@@ -41,7 +41,7 @@ def add_data():
                 st.session_state.design_institucional.append({'nome': nome, 'autor': autor})
             if materia == 'Organização do Estado e Direitos Fundamentais':
                 st.session_state.organizacao_estado_direitos_fundamentais.append({'nome': nome, 'autor': autor})
-        if st.button('Adicionar'):
+        if st.form_submit_button('Adicionar'):
             # Lógica para adicionar os dados à base de dados
             st.success(f'Obra {nome}, de {autor}, adicionada com sucesso!')
 
