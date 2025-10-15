@@ -269,14 +269,6 @@ def view_data():
             'Teoria do Direito Constitucional': 'teoria_constitucional',
             'Crime e Sociedade': 'crime_sociedade'
         }
-        key_list = map_p1.get(materia)
-        obras = st.session_state.get(key_list, [])
-        if obras:
-            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
-            for i, item in enumerate(obras, start=1):
-                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
-        else:
-            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
         if materia == 'Teoria do Direito':
             st.write('Prof. Fernando Leal')
         elif materia == 'Teoria do Estado Democrático':
@@ -289,6 +281,14 @@ def view_data():
             st.write('Prof. Leonardo Costa')
         elif materia == 'Pensamento Jurídico Brasileiro':
             st.write('Profª. Elisa Cruz')
+        key_list = map_p1.get(materia)
+        obras = st.session_state.get(key_list, [])
+        if obras:
+            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+            for i, item in enumerate(obras, start=1):
+                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+        else:
+            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
     elif periodo == '2º Período':
         materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
                                           'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
@@ -304,14 +304,6 @@ def view_data():
             'Design Institucional': 'design_institucional',
             'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
         }
-        key_list = map_p2.get(materia)
-        obras = st.session_state.get(key_list, [])
-        if obras:
-            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
-            for i, item in enumerate(obras, start=1):
-                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
-        else:
-            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
         if materia == 'Sociologia Jurídica':
             st.write('Prof. Camila Alves')
         elif materia == 'Programação para Advogados':
@@ -326,6 +318,14 @@ def view_data():
             st.write('Prof. Wallace Corbo')
         elif materia == 'Organização do Estado e Direitos Fundamentais':
             st.write('Profs. Alvaro Palma, Gustavo Schimidt e Guilherme Aleixo')
+        key_list = map_p2.get(materia)
+        obras = st.session_state.get(key_list, [])
+        if obras:
+            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
+            for i, item in enumerate(obras, start=1):
+                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
+        else:
+            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
     else:
         materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
         if materia:
