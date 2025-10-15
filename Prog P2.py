@@ -37,6 +37,11 @@ if 'organizacao_estado_direitos_fundamentais' not in st.session_state:
     st.session_state.organizacao_estado_direitos_fundamentais = []
 
 # -----------------------
+# Mínima adição: flag para manter o modo entre reruns
+if 'mode' not in st.session_state:
+    st.session_state.mode = None  # valores possíveis: None, 'add', 'view'
+
+# -----------------------
 # Funções de UI (mantive nomes e estrutura)
 def add_data():
     st.header('Adicionar obra')
@@ -166,32 +171,4 @@ def view_data():
             for item in st.session_state.sociologia_juridica:
                 st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
         elif materia == 'Programação para Advogados':
-            st.write('Exibindo obras para Programação para Advogados')
-            for item in st.session_state.programacao_para_advogados:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Teoria Geral do Direito Civil':
-            st.write('Exibindo obras para Teoria Geral do Direito Civil')
-            for item in st.session_state.teoria_geral_direito_civil:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Análise Econômica do Direito':
-            st.write('Exibindo obras para Análise Econômica do Direito')
-            for item in st.session_state.analise_economica_direito:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Penas e Medidas Alternativas':
-            st.write('Exibindo obras para Penas e Medidas Alternativas')
-            for item in st.session_state.penas_medidas_alternativas:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Design Institucional':
-            st.write('Exibindo obras para Design Institucional')
-            for item in st.session_state.design_institucional:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-        elif materia == 'Organização do Estado e Direitos Fundamentais':
-            st.write('Exibindo obras para Organização do Estado e Direitos Fundamentais')
-            for item in st.session_state.organizacao_estado_direitos_fundamentais:
-                st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
-
-# -----------------------
-# Botões principais (mantidos no fim como no seu código)
-st.subheader('O que você deseja fazer?')
-st.button('Adicionar obra', on_click=add_data)
-st.button('Ver obras', on_click=view_data)
+            st
