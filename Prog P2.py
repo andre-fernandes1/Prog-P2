@@ -88,8 +88,7 @@ def view_data():
         
             elif periodo == '2º Período':
                 materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados', 'Teoria Geral do Direito Civil', 'Análise Econômica do Direito', 'Penas e Medidas Alternativas', 'Design Institucional', 'Organização do Estado e Direitos Fundamentais'])
-                
-    buscar = st.form_submit_button('Buscar')
+            buscar = st.button('Buscar')
     if buscar: 
         if materia == 'Teoria do Direito':
             st.write('Exibindo obras para Teoria do Direito')
@@ -143,6 +142,7 @@ def view_data():
                     st.write('Exibindo obras para Organização do Estado e Direitos Fundamentais')
                     for item in st.session_state.organizacao_estado_direitos_fundamentais:
                         st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
+    st.form_submit_button('Voltar')
 
 st.subheader('O que você deseja fazer?')
 st.button('Adicionar obra', on_click=add_data)
