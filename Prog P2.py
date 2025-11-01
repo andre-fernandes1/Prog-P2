@@ -74,24 +74,37 @@ def merge_db_into_session(db: dict):
 # ---------- Inicialização segura (trecho que você mandou) ----------
 DB_FILE = str(DB_PATH)  # compatibilidade com nomes que você usava
 
+# --- Constantes para inicialização e limpeza ---
+LISTAS_FIXAS = [
+    'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
+    'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
+    'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
+    'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
+]
+
+PERIODOS_DINAMICOS = ['periodo_3', 'periodo_4', 'periodo_5']
+
+
 # Inicializa variáveis vazias no session_state
 def inicializar_base():
-    listas_fixas = [
-        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
-        'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
-        'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
-        'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
-    ]
-
-    periodos = ['periodo_3', 'periodo_4', 'periodo_5']
-
-    # inicializa listas fixas
-    for key in listas_fixas:
+    for key in LISTAS_FIXAS:
         st.session_state.setdefault(key, [])
 
-    # inicializa períodos dinâmicos (dicts)
-    for key in periodos:
+    for key in PERIODOS_DINAMICOS:
         st.session_state.setdefault(key, {})
+
+
+# Função para limpar a base de dados
+def limpar_base_dados():
+    for key in LISTAS_FIXAS:
+        st.session_state[key] = []
+
+    for key in PERIODOS_DINAMICOS:
+        st.session_state[key] = {}
+
+    save_db(build_persistent_db())
+    st.success("✅ Base de dados limpa com sucesso!")
+
 
 # Carrega do JSON apenas uma vez
 def carregar_dados():
@@ -334,29 +347,6 @@ def view_data():
                 for item in st.session_state[key][materia]:
                     st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
 
-# ---------- Função para limpar a base de dados ----------
-def limpar_base_dados():
-    listas_fixas = [
-        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
-        'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
-        'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
-        'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
-    ]
-
-    periodos = ['periodo_3', 'periodo_4', 'periodo_5']
-
-    # limpa listas fixas
-    for key in listas_fixas:
-        st.session_state[key] = []
-
-    # limpa períodos
-    for key in periodos:
-        st.session_state[key] = {}
-
-    save_db(build_persistent_db())
-    st.success("✅ Base de dados limpa com sucesso!")
-
-# -----------------------
 # Botões principais (mantidos no fim como no seu código)
 st.subheader('O que você deseja fazer?')
 
