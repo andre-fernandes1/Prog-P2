@@ -76,40 +76,22 @@ DB_FILE = str(DB_PATH)  # compatibilidade com nomes que você usava
 
 # Inicializa variáveis vazias no session_state
 def inicializar_base():
-    if "teoria_do_direito" not in st.session_state:
-        st.session_state.teoria_do_direito = []
-    if "teoria_do_estado_democratico" not in st.session_state:
-        st.session_state.teoria_do_estado_democratico = []
-    if "pensamento_juridico_brasileiro" not in st.session_state:
-        st.session_state.pensamento_juridico_brasileiro = []
-    if "economia" not in st.session_state:
-        st.session_state.economia = []
-    if "teoria_constitucional" not in st.session_state:
-        st.session_state.teoria_constitucional = []
-    if "crime_sociedade" not in st.session_state:
-        st.session_state.crime_sociedade = []
+    listas_fixas = [
+        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
+        'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
+        'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
+        'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
+    ]
 
-    if "sociologia_juridica" not in st.session_state:
-        st.session_state.sociologia_juridica = []
-    if "programacao_para_advogados" not in st.session_state:
-        st.session_state.programacao_para_advogados = []
-    if "teoria_geral_direito_civil" not in st.session_state:
-        st.session_state.teoria_geral_direito_civil = []
-    if "analise_economica_direito" not in st.session_state:
-        st.session_state.analise_economica_direito = []
-    if "penas_medidas_alternativas" not in st.session_state:
-        st.session_state.penas_medidas_alternativas = []
-    if "design_institucional" not in st.session_state:
-        st.session_state.design_institucional = []
-    if "organizacao_estado_direitos_fundamentais" not in st.session_state:
-        st.session_state.organizacao_estado_direitos_fundamentais = []
+    periodos = ['periodo_3', 'periodo_4', 'periodo_5']
 
-    if "periodo_3" not in st.session_state:
-        st.session_state.periodo_3 = {}
-    if "periodo_4" not in st.session_state:
-        st.session_state.periodo_4 = {}
-    if "periodo_5" not in st.session_state:
-        st.session_state.periodo_5 = {}
+    # inicializa listas fixas
+    for key in listas_fixas:
+        st.session_state.setdefault(key, [])
+
+    # inicializa períodos dinâmicos (dicts)
+    for key in periodos:
+        st.session_state.setdefault(key, {})
 
 # Carrega do JSON apenas uma vez
 def carregar_dados():
@@ -354,29 +336,24 @@ def view_data():
 
 # ---------- Função para limpar a base de dados ----------
 def limpar_base_dados():
-    # Redefine todas as listas e dicionários
-    st.session_state.teoria_do_direito = []
-    st.session_state.teoria_do_estado_democratico = []
-    st.session_state.pensamento_juridico_brasileiro = []
-    st.session_state.economia = []
-    st.session_state.teoria_constitucional = []
-    st.session_state.crime_sociedade = []
+    listas_fixas = [
+        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
+        'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
+        'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
+        'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
+    ]
 
-    st.session_state.sociologia_juridica = []
-    st.session_state.programacao_para_advogados = []
-    st.session_state.teoria_geral_direito_civil = []
-    st.session_state.analise_economica_direito = []
-    st.session_state.penas_medidas_alternativas = []
-    st.session_state.design_institucional = []
-    st.session_state.organizacao_estado_direitos_fundamentais = []
+    periodos = ['periodo_3', 'periodo_4', 'periodo_5']
 
-    st.session_state.periodo_3 = {}
-    st.session_state.periodo_4 = {}
-    st.session_state.periodo_5 = {}
+    # limpa listas fixas
+    for key in listas_fixas:
+        st.session_state[key] = []
 
-    # Salva o arquivo JSON vazio de forma consistente
+    # limpa períodos
+    for key in periodos:
+        st.session_state[key] = {}
+
     save_db(build_persistent_db())
-
     st.success("✅ Base de dados limpa com sucesso!")
 
 # -----------------------
