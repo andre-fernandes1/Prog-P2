@@ -3,6 +3,8 @@ import json
 import os
 import tempfile
 from pathlib import Path
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # ---------- Config / DB ----------
 DB_PATH = Path("db.json")  # arquivo de persistência
@@ -356,8 +358,12 @@ def _set_mode_add():
 def _set_mode_view():
     st.session_state.mode = 'view'
 
+def _set_mode_stats():
+    st.session_state.mode = 'stats'
+
 st.button('Adicionar obra', on_click=_set_mode_add)
 st.button('Ver obras', on_click=_set_mode_view)
+st.button('📊 Estatísticas', on_click=lambda: stats())
 
 # ---------- Exportar / Importar JSON (botões solicitados) ----------
 st.write("---")
@@ -386,10 +392,63 @@ if uploaded is not None:
     except Exception as e:
         st.error(f"Erro ao importar arquivo: {e}")
 
+def stats():
+    st.header("📊 Estatísticas de Obras por Matéria")
+
+    # Monta o contador
+    contagem = {}
+
+    # Listas fixas (mapeando chave -> nome exibido)
+    mapa_nomes = {
+        'teoria_do_direito': 'Teoria do Direito',
+        'teoria_do_estado_democratico': 'Teoria do Estado Democrático',
+        'pensamento_juridico_brasileiro': 'Pensamento Jurídico Brasileiro',
+        'economia': 'Economia',
+        'teoria_constitucional': 'Teoria do Direito Constitucional',
+        'crime_sociedade': 'Crime e Sociedade',
+        'sociologia_juridica': 'Sociologia Jurídica',
+        'programacao_para_advogados': 'Programação para Advogados',
+        'teoria_geral_direito_civil': 'Teoria Geral do Direito Civil',
+        'analise_economica_direito': 'Análise Econômica do Direito',
+        'penas_medidas_alternativas': 'Penas e Medidas Alternativas',
+        'design_institucional': 'Design Institucional',
+        'organizacao_estado_direitos_fundamentais': 'Organização do Estado e Direitos Fundamentais'
+    }
+
+    for key, nome in mapa_nomes.items():
+        contagem[nome] = len(st.session_state.get(key, []))
+
+    # Períodos dinâmicos
+    for periodo in ['periodo_3', 'periodo_4', 'periodo_5']:
+        materias = st.session_state.get(periodo, {})
+        for materia, obras in materias.items():
+            contagem[materia] = len(obras)
+
+    # Transforma em dataframe
+    df = pd.DataFrame(list(contagem.items()), columns=["Matéria", "Quantidade"])
+    df = df[df["Quantidade"] > 0].sort_values(by="Quantidade", ascending=False)
+
+    if df.empty:
+        st.info("Ainda não há obras cadastradas para gerar estatísticas.")
+        return
+
+    st.dataframe(df)
+
+    # Plot
+    fig, ax = plt.subplots()
+    ax.bar(df["Matéria"], df["Quantidade"])
+    ax.set_title("Quantidade de Obras por Matéria")
+    ax.set_xticklabels(df["Matéria"], rotation=45, ha="right")
+
+    st.pyplot(fig)
+
+
 # Renderiza a tela correspondente com base na flag persistente
 if st.session_state.mode == 'add':
     add_data()
 elif st.session_state.mode == 'view':
     view_data()
+elif st.session_state.mode == 'stats':
+    stats()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
