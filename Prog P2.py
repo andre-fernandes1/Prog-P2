@@ -410,5 +410,3 @@ if st.session_state.mode == 'stats':
 
 # Mensagem final para o usuário
 st.write("---")
-st.caption("Aplicativo refatorado: estrutura unificada MAPA_PERIODOS para eliminar repetições. "
-           "Períodos 1 e 2 são mapeados; 3/4/5 são dinâmicos (usuário digita a matéria).")
