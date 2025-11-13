@@ -6,84 +6,11 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# ----------------------------------------------------------
-# Mapeamento único de todas as matérias
-# ----------------------------------------------------------
-MAPA_MATERIAS = {
-    'teoria_do_direito': {
-        'nome_exibido': 'Teoria do Direito',
-        'professor': 'Fernando Leal',
-        'periodo': 1
-    },
-    'teoria_do_estado_democratico': {
-        'nome_exibido': 'Teoria do Estado Democrático',
-        'professor': 'Leandro Molhano',
-        'periodo': 1
-    },
-    'pensamento_juridico_brasileiro': {
-        'nome_exibido': 'Pensamento Jurídico Brasileiro',
-        'professor': 'Elisa Cruz',
-        'periodo': 1
-    },
-    'economia': {
-        'nome_exibido': 'Economia',
-        'professor': 'Leonardo Costa',
-        'periodo': 1
-    },
-    'teoria_constitucional': {
-        'nome_exibido': 'Teoria do Direito Constitucional',
-        'professor': 'Felipe Fonte',
-        'periodo': 1
-    },
-    'crime_sociedade': {
-        'nome_exibido': 'Crime e Sociedade',
-        'professor': 'Fernanda Prates / Thiago Bottino',
-        'periodo': 1
-    },
 
-    # ---------- 2º Período ----------
-    'sociologia_juridica': {
-        'nome_exibido': 'Sociologia Jurídica',
-        'professor': 'Camila Alves',
-        'periodo': 2
-    },
-    'programacao_para_advogados': {
-        'nome_exibido': 'Programação para Advogados',
-        'professor': 'Josir Gomes',
-        'periodo': 2
-    },
-    'teoria_geral_direito_civil': {
-        'nome_exibido': 'Teoria Geral do Direito Civil',
-        'professor': 'Filipe Medon',
-        'periodo': 2
-    },
-    'analise_economica_direito': {
-        'nome_exibido': 'Análise Econômica do Direito',
-        'professor': 'Paulo Mello',
-        'periodo': 2
-    },
-    'penas_medidas_alternativas': {
-        'nome_exibido': 'Penas e Medidas Alternativas',
-        'professor': 'André Mendes',
-        'periodo': 2
-    },
-    'design_institucional': {
-        'nome_exibido': 'Design Institucional',
-        'professor': 'Wallace Corbo',
-        'periodo': 2
-    },
-    'organizacao_estado_direitos_fundamentais': {
-        'nome_exibido': 'Organização do Estado e Direitos Fundamentais',
-        'professor': 'Álvaro / Gustavo / Guilherme',
-        'periodo': 2
-    }
-}
-
-# ---------- Config / DB ----------
-DB_PATH = Path("db.json")  # arquivo de persistência
+DB_PATH = Path("db.json")
 
 def load_db_raw():
-    """Retorna dict carregado do arquivo (ou {}). Não altera session_state."""
+    """Carrega JSON sem alterar session_state."""
     if not DB_PATH.exists():
         return {}
     try:
@@ -91,161 +18,177 @@ def load_db_raw():
             data = json.load(f)
             return data if isinstance(data, dict) else {}
     except Exception as e:
-        st.warning(f"Não foi possível ler {DB_PATH}: {e}")
+        st.warning(f"Erro lendo banco de dados: {e}")
         return {}
 
 def save_db(data: dict):
-    """Salva dict em JSON de forma atômica (escreve em temp e renomeia)."""
+    """Salva JSON de forma atômica."""
     try:
-        tmp_fd, tmp_path = tempfile.mkstemp(dir=str(DB_PATH.parent or "."), text=True)
-        with os.fdopen(tmp_fd, "w", encoding="utf-8") as tmpf:
-            json.dump(data, tmpf, ensure_ascii=False, indent=2)
-            tmpf.flush()
-            os.fsync(tmpf.fileno())
+        tmp_fd, tmp_path = tempfile.mkstemp(dir=".", text=True)
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
         os.replace(tmp_path, DB_PATH)
     except Exception as e:
-        st.error(f"Erro ao salvar DB: {e}")
+        st.error(f"Erro salvando DB: {e}")
 
-def build_persistent_db():
-    db = {key: st.session_state.get(key, []) for key in MAPA_MATERIAS.keys()}
-
-    # inclui períodos dinâmicos
-    for pk in ("periodo_3","periodo_4","periodo_5"):
-        if pk in st.session_state:
-            db[pk] = st.session_state[pk]
-
-    return db
-
-def merge_db_into_session(db: dict):
-    """
-    Merge (extend) the loaded db dict into st.session_state.
-    Lists are extended; dicts (periodo_3/4/5) are merged by extending their inner lists.
-    """
-    for k, v in db.items():
-        if isinstance(v, list):
-            if k not in st.session_state:
-                st.session_state[k] = []
-            st.session_state[k].extend(v)
-        elif isinstance(v, dict):
-            # dynamic period dict: {materia: [obra,...], ...}
-            if k not in st.session_state:
-                st.session_state[k] = {}
-            for materia, obras in v.items():
-                if materia not in st.session_state[k]:
-                    st.session_state[k][materia] = []
-                st.session_state[k][materia].extend(obras)
-        else:
-            # ignore other types
-            continue
-
-# ---------- Inicialização segura (trecho que você mandou) ----------
-DB_FILE = str(DB_PATH)  # compatibilidade com nomes que você usava
-
-# --- Constantes para inicialização e limpeza ---
-LISTAS_FIXAS = list(MAPA_MATERIAS.keys())
-
-PERIODOS_DINAMICOS = ['periodo_3', 'periodo_4', 'periodo_5']
+#    MAPA UNIFICADO DE MATÉRIAS POR PERÍODO
 
 
-# Inicializa variáveis vazias no session_state
+MAPA_PERIODOS = {
+    1: {
+        "Teoria do Direito": {
+            "key": "teoria_do_direito",
+            "professor": "Prof. Fernando Leal"
+        },
+        "Teoria do Estado Democrático": {
+            "key": "teoria_do_estado_democratico",
+            "professor": "Prof. Leandro Molhano"
+        },
+        "Pensamento Jurídico Brasileiro": {
+            "key": "pensamento_juridico_brasileiro",
+            "professor": "Profª Elisa Cruz"
+        },
+        "Economia": {
+            "key": "economia",
+            "professor": "Prof. Leonardo Costa"
+        },
+        "Teoria do Direito Constitucional": {
+            "key": "teoria_constitucional",
+            "professor": "Prof. Felipe Fonte"
+        },
+        "Crime e Sociedade": {
+            "key": "crime_sociedade",
+            "professor": "Profs. Fernanda Prates e Thiago Bottino"
+        }
+    },
+
+    2: {
+        "Sociologia Jurídica": {
+            "key": "sociologia_juridica",
+            "professor": "Prof. Camila Alves"
+        },
+        "Programação para Advogados": {
+            "key": "programacao_para_advogados",
+            "professor": "Prof. Josir Gomes"
+        },
+        "Teoria Geral do Direito Civil": {
+            "key": "teoria_geral_direito_civil",
+            "professor": "Prof. Filipe Medon"
+        },
+        "Análise Econômica do Direito": {
+            "key": "analise_economica_direito",
+            "professor": "Prof. Paulo Mello"
+        },
+        "Penas e Medidas Alternativas": {
+            "key": "penas_medidas_alternativas",
+            "professor": "Prof. André Mendes"
+        },
+        "Design Institucional": {
+            "key": "design_institucional",
+            "professor": "Prof. Wallace Corbo"
+        },
+        "Organização do Estado e Direitos Fundamentais": {
+            "key": "organizacao_estado_direitos_fundamentais",
+            "professor": "Profs. Alvaro Palma, Gustavo Schmidt e Guilherme Aleixo"
+        }
+    }
+}
+
+# período 3,4,5 são dinâmicos
+PERIODOS_DINAMICOS = ["periodo_3", "periodo_4", "periodo_5"]
+
+# Conjunto das LISTAS FIXAS (extraído automaticamente do mapa)
+LISTAS_FIXAS = [info["key"] for periodo in MAPA_PERIODOS.values() for info in periodo.values()]
+
+# ============================================
+#    INICIALIZAÇÃO
+# ============================================
+
 def inicializar_base():
     for key in LISTAS_FIXAS:
         st.session_state.setdefault(key, [])
+    for pdyn in PERIODOS_DINAMICOS:
+        st.session_state.setdefault(pdyn, {})
 
-    for key in PERIODOS_DINAMICOS:
-        st.session_state.setdefault(key, {})
+def merge_db_into_session(db: dict):
+    for k, v in db.items():
+        if isinstance(v, list):
+            st.session_state.setdefault(k, [])
+            st.session_state[k].extend(v)
+        elif isinstance(v, dict):
+            st.session_state.setdefault(k, {})
+            for materia, obras in v.items():
+                st.session_state[k].setdefault(materia, [])
+                st.session_state[k][materia].extend(obras)
 
+def build_persistent_db():
+    db = {key: st.session_state.get(key, []) for key in LISTAS_FIXAS}
+    for pdyn in PERIODOS_DINAMICOS:
+        if pdyn in st.session_state:
+            db[pdyn] = st.session_state[pdyn]
+    return db
 
-# Função para limpar a base de dados
-def limpar_base_dados():
-    for key in LISTAS_FIXAS:
-        st.session_state[key] = []
-
-    for key in PERIODOS_DINAMICOS:
-        st.session_state[key] = {}
-
-    save_db(build_persistent_db())
-    st.success("✅ Base de dados limpa com sucesso!")
-
-
-# Carrega do JSON apenas uma vez
 def carregar_dados():
-    # usa flag para evitar duplicações entre reruns
-    if st.session_state.get("dados_carregados", False):
-        return
-    if DB_PATH.exists():
+    if not st.session_state.get("dados_carregados"):
         data = load_db_raw()
-        if data:
-            merge_db_into_session(data)
-    st.session_state.dados_carregados = True  # 🔐 garante que não duplica
+        merge_db_into_session(data)
+        st.session_state.dados_carregados = True
 
-# ---- Uso no início do app ----
 inicializar_base()
 carregar_dados()
 
-# ---------- Seu UI (mantido, com persistência integrada) ----------
 st.set_page_config(page_title='Base de dados de Direito', layout='centered')
 st.title('Base de dados de Direito 📚')
 st.subheader('Escola de Direito - FGV Direito Rio')
 
-# flag de modo (mantém compatibilidade com seu fluxo)
+# modo persistente
 if 'mode' not in st.session_state:
     st.session_state.mode = None
 
-# -----------------------
-# Função add_data com periodo FORA do form e leitura segura no submit
+# --------------------------------------------
+# Função: adicionar obra (usa MAPA_PERIODOS)
+# --------------------------------------------
 def add_data():
     st.header('Adicionar obra')
     st.write('Aqui você pode adicionar novas obras à base de dados de Direito.')
 
-    # garante chave de período anterior para detectar mudança
+    # mantém prev para evitar reaproveitamento indevido de widgets
     if "add_periodo_prev" not in st.session_state:
         st.session_state.add_periodo_prev = None
 
-    # *** Período fora do form (conforme solicitado) ***
-    periodo = st.selectbox('Período', [
-        '1º Período', '2º Período', '3º Período', '4º Período', '5º Período'
-    ], key="add_periodo")
+    periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key="add_periodo")
 
-    # Se o período mudou, removemos keys antigas de matéria para evitar reaproveitamento de estado
+    # se mudou o período, removemos keys de matéria para evitar estado "vazado"
     if st.session_state.add_periodo_prev != st.session_state.add_periodo:
         for k in ("add_materia_p1", "add_materia_p2", "add_materia_other"):
             if k in st.session_state:
                 del st.session_state[k]
-        # atualiza a marca
         st.session_state.add_periodo_prev = st.session_state.add_periodo
 
-    # --- Form com nome e autor (materia é criada condicionalmente dentro do form) ---
     with st.form("form_adicionar_obra"):
         nome = st.text_input('Nome da obra', key="add_nome")
         autor = st.text_input('Autor', key="add_autor")
 
-        # Criamos o widget de matéria correspondente ao periodo selecionado (chaves distintas)
+        # cria widget de matéria conforme o período selecionado (widgets com chaves distintas)
         if periodo == '1º Período':
-            _ = st.selectbox('Matéria', [
-                'Teoria do Direito', 'Teoria do Estado Democrático',
-                'Pensamento Jurídico Brasileiro', 'Economia',
-                'Teoria do Direito Constitucional', 'Crime e Sociedade'
-            ], key="add_materia_p1")
+            materias = list(MAPA_PERIODOS[1].keys())
+            _ = st.selectbox('Matéria', materias, key="add_materia_p1")
         elif periodo == '2º Período':
-            _ = st.selectbox('Matéria', [
-                'Sociologia Jurídica', 'Programação para Advogados',
-                'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
-                'Penas e Medidas Alternativas', 'Design Institucional',
-                'Organização do Estado e Direitos Fundamentais'
-            ], key="add_materia_p2")
+            materias = list(MAPA_PERIODOS[2].keys())
+            _ = st.selectbox('Matéria', materias, key="add_materia_p2")
         else:
             _ = st.text_input('Matéria (digite o nome da matéria)', key="add_materia_other")
 
         submitted = st.form_submit_button('Adicionar')
 
         if submitted:
-            # Leitura segura dos campos do session_state (periodo está fora do form)
             nome_val = st.session_state.get("add_nome", "").strip()
             autor_val = st.session_state.get("add_autor", "").strip()
             periodo_val = st.session_state.get("add_periodo", "").strip()
 
-            # Lê matéria com prioridade para p1, p2, other (garante consistência)
+            # lê matéria com prioridade p1, p2, other
             materia_val = ""
             if st.session_state.get("add_materia_p1", None):
                 materia_val = st.session_state.get("add_materia_p1")
@@ -259,78 +202,89 @@ def add_data():
             if not nome_val or not autor_val or not materia_val:
                 st.warning("Preencha 'Nome', 'Autor' e 'Matéria' antes de adicionar.")
             else:
-                # Inserção robusta usando periodo_val lido fora do form
-                # ---- aqui usamos um mapeamento para reduzir if/elif
-                # Busca automática da chave baseada no nome exibido
-                key = None
-                for k, info in MAPA_MATERIAS.items():
-                    if info["nome_exibido"] == materia_val and info["periodo"] == int(periodo_val[0]):
-                        key = k
-                        break
+                # converte label do período em número
+                periodo_map_label_to_num = {'1º Período': 1, '2º Período': 2, '3º Período': 3, '4º Período': 4, '5º Período': 5}
+                pnum = periodo_map_label_to_num.get(periodo_val)
 
-                if periodo_val in mapa_local:
-                    key = mapa_local[periodo_val].get(materia_val)
-                    if key:
-                        # garante que a lista existe
-                        if key not in st.session_state:
-                            st.session_state[key] = []
+                where_inserted = None
+
+                if pnum in (1, 2):
+                    # tenta mapear pelo MAPA_PERIODOS
+                    entry = MAPA_PERIODOS.get(pnum, {}).get(materia_val)
+                    if entry:
+                        key = entry["key"]
+                        st.session_state.setdefault(key, [])
                         st.session_state[key].append({'nome': nome_val, 'autor': autor_val})
                         where_inserted = key
                     else:
-                        # fallback: se materia não estiver mapeada, adiciona numa lista padrão do período
-                        if periodo_val == '1º Período':
-                            st.session_state.teoria_do_direito.append({'nome': nome_val, 'autor': autor_val})
-                            where_inserted = 'teoria_do_direito'
-                        elif periodo_val == '2º Período':
-                            st.session_state.programacao_para_advogados.append({'nome': nome_val, 'autor': autor_val})
-                            where_inserted = 'programacao_para_advogados'
-                        else:
-                            where_inserted = 'periodo_outros'
+                        # fallback para caso de matéria não mapeada (coloca na primeira lista do período)
+                        first_key = list(MAPA_PERIODOS[pnum].values())[0]["key"]
+                        st.session_state.setdefault(first_key, [])
+                        st.session_state[first_key].append({'nome': nome_val, 'autor': autor_val})
+                        where_inserted = first_key
                 else:
-                    # períodos 3/4/5: guarda em dict dinamico
-                    key_map = {
-                        '3º Período': 'periodo_3',
-                        '4º Período': 'periodo_4',
-                        '5º Período': 'periodo_5'
-                    }
-                    key = key_map.get(periodo_val, 'periodo_outros')
-                    if key not in st.session_state:
-                        st.session_state[key] = {}
-                    if materia_val not in st.session_state[key]:
-                        st.session_state[key][materia_val] = []
-                    st.session_state[key][materia_val].append({'nome': nome_val, 'autor': autor_val})
-                    where_inserted = f"{key}:{materia_val}"
+                    # períodos dinâmicos: armazena em dict por matéria
+                    key_map = {'3º Período': 'periodo_3', '4º Período': 'periodo_4', '5º Período': 'periodo_5'}
+                    dyn_key = key_map.get(periodo_val, 'periodo_outros')
+                    st.session_state.setdefault(dyn_key, {})
+                    st.session_state[dyn_key].setdefault(materia_val, [])
+                    st.session_state[dyn_key][materia_val].append({'nome': nome_val, 'autor': autor_val})
+                    where_inserted = f"{dyn_key}:{materia_val}"
 
-                # SALVA O DB EM DISCO (JSON)
+                # salva
                 save_db(build_persistent_db())
 
-                # Limpeza opcional após submit (limpa campos do form)
+                # limpa campos do form para próxima inclusão
                 for k in ("add_nome", "add_autor", "add_materia_p1", "add_materia_p2", "add_materia_other"):
                     if k in st.session_state:
                         del st.session_state[k]
 
-                st.success(f'Obra {nome_val}, de {autor_val}, adicionada com sucesso! (salva em {where_inserted})')
+                st.success(f'Obra "{nome_val}" — {autor_val} adicionada com sucesso! (salva em {where_inserted})')
 
-# -----------------------
-# Função view_data (mantida, mas com acesso seguro via st.session_state.get)
+# --------------------------------------------
+# Função: ver obras (usa MAPA_PERIODOS)
+# --------------------------------------------
 def view_data():
     st.header('Ver obras')
     st.write('Aqui você pode ver as obras na base de dados de Direito.')
+
     periodo = st.selectbox('Período', ['1º Período', '2º Período', '3º Período', '4º Período', '5º Período'], key='view_periodo')
-    if periodo == '1º Período':
-        materia = st.selectbox('Matéria', ['Teoria do Direito', 'Teoria do Estado Democrático',
-                                          'Pensamento Jurídico Brasileiro', 'Economia',
-                                          'Teoria do Direito Constitucional', 'Crime e Sociedade'],
-                               key='view_materia_p1')
-        for key, info in MAPA_MATERIAS.items():
-          if info["nome_exibido"] == materia and info["periodo"] == int(periodo[0]):
-            st.write(f"Professor: {info['professor']}")
-            obras = st.session_state.get(key, [])
 
+    periodo_map_label_to_num = {'1º Período': 1, '2º Período': 2}
+    pnum = periodo_map_label_to_num.get(periodo)
 
-# Botões principais (mantidos no fim como no seu código)
-st.subheader('O que você deseja fazer?')
+    if pnum in (1, 2):
+        materias = list(MAPA_PERIODOS[pnum].keys())
+        materia = st.selectbox('Matéria', materias, key=f'view_materia_p{pnum}')
+        entry = MAPA_PERIODOS[pnum].get(materia, {})
+        professor = entry.get("professor")
+        if professor:
+            st.write(f"Professor(a): {professor}")
 
+        key_list = entry.get("key")
+        obras = st.session_state.get(key_list, []) if key_list else []
+        if obras:
+            st.write(f"Exibindo {len(obras)} obra(s) para *{materia}*:")
+            for i, item in enumerate(obras, start=1):
+                st.write(f"{i}. *{item['nome']}* — {item['autor']}")
+        else:
+            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
+    else:
+        materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
+        if materia:
+            key_map = {'3º Período': 'periodo_3', '4º Período': 'periodo_4', '5º Período': 'periodo_5'}
+            key = key_map.get(periodo, None)
+            if key and key in st.session_state and materia in st.session_state[key]:
+                obras = st.session_state[key][materia]
+                st.write(f"Exibindo {len(obras)} obra(s) para *{materia}*:")
+                for i, item in enumerate(obras, start=1):
+                    st.write(f"{i}. *{item['nome']}* — {item['autor']}")
+            else:
+                st.info(f"Nenhuma obra cadastrada em '{materia}' para {periodo}.")
+
+# --------------------------------------------
+# Botões principais (controle de modo)
+# --------------------------------------------
 def _set_mode_add():
     st.session_state.mode = 'add'
 
@@ -340,23 +294,36 @@ def _set_mode_view():
 def _set_mode_stats():
     st.session_state.mode = 'stats'
 
+st.subheader('O que você deseja fazer?')
 st.button('Adicionar obra', on_click=_set_mode_add)
 st.button('Ver obras', on_click=_set_mode_view)
-st.button('📊 Estatísticas', on_click=lambda: stats())
+st.button('📊 Estatísticas', on_click=_set_mode_stats)
 
-# ---------- Exportar / Importar JSON (botões solicitados) ----------
+# --------------------------------------------
+# Import / Export / Limpar
+# --------------------------------------------
 st.write("---")
 st.markdown("### Dados (import / export)")
+
+def limpar_base_dados():
+    # limpa listas fixas
+    for key in LISTAS_FIXAS:
+        st.session_state[key] = []
+    # limpa períodos dinâmicos
+    for key in PERIODOS_DINAMICOS:
+        st.session_state[key] = {}
+    save_db(build_persistent_db())
+    st.success("✅ Base de dados limpa com sucesso!")
 
 if st.button("🧹 Limpar Base de Dados"):
     limpar_base_dados()
 
-# Exporta o JSON atual (constroi a representação atual do DB)
+# exporta
 db_bytes = json.dumps(build_persistent_db(), ensure_ascii=False, indent=2).encode('utf-8')
 st.download_button(label="Exportar DB (JSON)", data=db_bytes, file_name="db.json", mime="application/json")
 
-# Importa um JSON e faz merge/extend
-uploaded = st.file_uploader("Importar DB (JSON) — será *mesclado* com os dados atuais", type=['json'])
+# importa
+uploaded = st.file_uploader("Importar DB (JSON) — será mesclado com os dados atuais", type=['json'])
 if uploaded is not None:
     try:
         content = uploaded.read().decode('utf-8')
@@ -364,55 +331,84 @@ if uploaded is not None:
         if not isinstance(parsed, dict):
             st.error("Arquivo JSON inválido: deve ser um objeto/dicionário no topo.")
         else:
-            # faz merge into session (extend)
             merge_db_into_session(parsed)
             save_db(build_persistent_db())
             st.success("Arquivo importado e mesclado com sucesso! (dados salvos em db.json)")
     except Exception as e:
         st.error(f"Erro ao importar arquivo: {e}")
 
-def stats():
-    st.header("📊 Estatísticas de Obras por Matéria")
-
-    # Monta o contador
-    contagem = {}
-
-    for key, info in MAPA_MATERIAS.items():
-        contagem[info["nome_exibido"]] = len(st.session_state.get(key, []))
-
-
-    # Períodos dinâmicos
-    for periodo in ['periodo_3', 'periodo_4', 'periodo_5']:
-        materias = st.session_state.get(periodo, {})
-        for materia, obras in materias.items():
-            contagem[materia] = len(obras)
-
-    # Transforma em dataframe
-    df = pd.DataFrame(list(contagem.items()), columns=["Matéria", "Quantidade"])
-    df = df[df["Quantidade"] > 0].sort_values(by="Quantidade", ascending=False)
-
-    if df.empty:
-        st.info("Ainda não há obras cadastradas para gerar estatísticas.")
-        return
-
-    st.dataframe(df)
-
-    # Plot
-    fig, ax = plt.subplots()
-    ax.bar(df["Matéria"], df["Quantidade"])
-    ax.set_title("Quantidade de Obras por Matéria")
-    ax.set_xticklabels(df["Matéria"], rotation=45, ha="right")
-
-    st.pyplot(fig)
-
-
-# Renderiza a tela correspondente com base na flag persistente
+# --------------------------------------------
+# Renderiza a tela correspondente ao modo
+# (stats será implementado na PARTE 3)
+# --------------------------------------------
 if st.session_state.mode == 'add':
     add_data()
 elif st.session_state.mode == 'view':
     view_data()
 elif st.session_state.mode == 'stats':
-    stats()
+    st.header("📊 Estatísticas")
+    st.info("Aguarde — função de estatísticas (gráficos e contagem) será exibida na próxima parte.")
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
 
+# ============================================
+#  PARTE 3 — Estatísticas, finalização e polimentos
+# ============================================
+
+def stats():
+    st.header("📊 Estatísticas de Obras por Matéria")
+
+    # monta contagem inicial a partir das listas fixas (usando os nomes exibidos do MAPA_PERIODOS)
+    contagem = {}
+
+    # preenche a partir do MAPA_PERIODOS para garantir nomes humanos consistentes
+    for pnum, materias in MAPA_PERIODOS.items():
+        for materia_label, info in materias.items():
+            key = info["key"]
+            contagem[materia_label] = len(st.session_state.get(key, []))
+
+    # inclui períodos dinâmicos (periodo_3/4/5) — as chaves são as matérias digitadas pelo usuário
+    for periodo in PERIODOS_DINAMICOS:
+        materias = st.session_state.get(periodo, {})
+        for materia_label, obras in materias.items():
+            # Se já existir (mesma matéria em lista fixa), somamos; caso contrário criamos
+            contagem[materia_label] = contagem.get(materia_label, 0) + len(obras)
+
+    # converte em dataframe
+    df = pd.DataFrame(list(contagem.items()), columns=["Matéria", "Quantidade"])
+    # filtra zeros e ordena
+    df = df[df["Quantidade"] > 0].sort_values(by="Quantidade", ascending=False).reset_index(drop=True)
+
+    if df.empty:
+        st.info("Ainda não há obras cadastradas para gerar estatísticas.")
+        return
+
+    # apresenta tabela e um gráfico de barras
+    st.subheader("Tabela de contagem")
+    st.dataframe(df)
+
+    # Gráfico com matplotlib (detalhes de estilo mínimos para boa legibilidade)
+    fig, ax = plt.subplots(figsize=(10, max(4, len(df) * 0.4)))
+    ax.bar(df["Matéria"], df["Quantidade"])
+    ax.set_title("Quantidade de Obras por Matéria")
+    ax.set_xlabel("Matéria")
+    ax.set_ylabel("Quantidade")
+    ax.set_xticks(range(len(df["Matéria"])))
+    ax.set_xticklabels(df["Matéria"], rotation=45, ha="right")
+    plt.tight_layout()
+
+    st.pyplot(fig)
+
+# Substitui placeholder de stats (caso já estivesse setado)
+if st.session_state.mode == 'stats':
+    stats()
+
+# -------------------------
+# Pequeno ajuste: quando trocamos de modo, garantimos rerun adequado
+# -------------------------
+# (Os botões já setam st.session_state.mode; a lógica acima renderiza a tela correta.)
+
+# Mensagem final para o usuário
+st.write("---")
+st.caption("Aplicativo refatorado: estrutura unificada MAPA_PERIODOS para eliminar repetições. "
+           "Períodos 1 e 2 são mapeados; 3/4/5 são dinâmicos (usuário digita a matéria).")
