@@ -6,6 +6,79 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# ----------------------------------------------------------
+# Mapeamento único de todas as matérias
+# ----------------------------------------------------------
+MAPA_MATERIAS = {
+    'teoria_do_direito': {
+        'nome_exibido': 'Teoria do Direito',
+        'professor': 'Fernando Leal',
+        'periodo': 1
+    },
+    'teoria_do_estado_democratico': {
+        'nome_exibido': 'Teoria do Estado Democrático',
+        'professor': 'Leandro Molhano',
+        'periodo': 1
+    },
+    'pensamento_juridico_brasileiro': {
+        'nome_exibido': 'Pensamento Jurídico Brasileiro',
+        'professor': 'Elisa Cruz',
+        'periodo': 1
+    },
+    'economia': {
+        'nome_exibido': 'Economia',
+        'professor': 'Leonardo Costa',
+        'periodo': 1
+    },
+    'teoria_constitucional': {
+        'nome_exibido': 'Teoria do Direito Constitucional',
+        'professor': 'Felipe Fonte',
+        'periodo': 1
+    },
+    'crime_sociedade': {
+        'nome_exibido': 'Crime e Sociedade',
+        'professor': 'Fernanda Prates / Thiago Bottino',
+        'periodo': 1
+    },
+
+    # ---------- 2º Período ----------
+    'sociologia_juridica': {
+        'nome_exibido': 'Sociologia Jurídica',
+        'professor': 'Camila Alves',
+        'periodo': 2
+    },
+    'programacao_para_advogados': {
+        'nome_exibido': 'Programação para Advogados',
+        'professor': 'Josir Gomes',
+        'periodo': 2
+    },
+    'teoria_geral_direito_civil': {
+        'nome_exibido': 'Teoria Geral do Direito Civil',
+        'professor': 'Filipe Medon',
+        'periodo': 2
+    },
+    'analise_economica_direito': {
+        'nome_exibido': 'Análise Econômica do Direito',
+        'professor': 'Paulo Mello',
+        'periodo': 2
+    },
+    'penas_medidas_alternativas': {
+        'nome_exibido': 'Penas e Medidas Alternativas',
+        'professor': 'André Mendes',
+        'periodo': 2
+    },
+    'design_institucional': {
+        'nome_exibido': 'Design Institucional',
+        'professor': 'Wallace Corbo',
+        'periodo': 2
+    },
+    'organizacao_estado_direitos_fundamentais': {
+        'nome_exibido': 'Organização do Estado e Direitos Fundamentais',
+        'professor': 'Álvaro / Gustavo / Guilherme',
+        'periodo': 2
+    }
+}
+
 # ---------- Config / DB ----------
 DB_PATH = Path("db.json")  # arquivo de persistência
 
@@ -34,21 +107,13 @@ def save_db(data: dict):
         st.error(f"Erro ao salvar DB: {e}")
 
 def build_persistent_db():
-    """Constrói o dict com as chaves que serão persistidas."""
-    keys_to_save = [
-        'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
-        'economia','teoria_constitucional','crime_sociedade',
-        'sociologia_juridica','programacao_para_advogados','teoria_geral_direito_civil',
-        'analise_economica_direito','penas_medidas_alternativas','design_institucional',
-        'organizacao_estado_direitos_fundamentais'
-    ]
-    db = {}
-    for k in keys_to_save:
-        db[k] = st.session_state.get(k, [])
-    # inclui periodos dinamicos se existirem
+    db = {key: st.session_state.get(key, []) for key in MAPA_MATERIAS.keys()}
+
+    # inclui períodos dinâmicos
     for pk in ("periodo_3","periodo_4","periodo_5"):
         if pk in st.session_state:
             db[pk] = st.session_state[pk]
+
     return db
 
 def merge_db_into_session(db: dict):
@@ -77,12 +142,7 @@ def merge_db_into_session(db: dict):
 DB_FILE = str(DB_PATH)  # compatibilidade com nomes que você usava
 
 # --- Constantes para inicialização e limpeza ---
-LISTAS_FIXAS = [
-    'teoria_do_direito','teoria_do_estado_democratico','pensamento_juridico_brasileiro',
-    'economia','teoria_constitucional','crime_sociedade','sociologia_juridica',
-    'programacao_para_advogados','teoria_geral_direito_civil','analise_economica_direito',
-    'penas_medidas_alternativas','design_institucional','organizacao_estado_direitos_fundamentais'
-]
+LISTAS_FIXAS = list(MAPA_MATERIAS.keys())
 
 PERIODOS_DINAMICOS = ['periodo_3', 'periodo_4', 'periodo_5']
 
@@ -201,25 +261,12 @@ def add_data():
             else:
                 # Inserção robusta usando periodo_val lido fora do form
                 # ---- aqui usamos um mapeamento para reduzir if/elif
-                mapa_local = {
-                    '1º Período': {
-                        'Teoria do Direito': 'teoria_do_direito',
-                        'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
-                        'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro',
-                        'Economia': 'economia',
-                        'Teoria do Direito Constitucional': 'teoria_constitucional',
-                        'Crime e Sociedade': 'crime_sociedade'
-                    },
-                    '2º Período': {
-                        'Sociologia Jurídica': 'sociologia_juridica',
-                        'Programação para Advogados': 'programacao_para_advogados',
-                        'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil',
-                        'Análise Econômica do Direito': 'analise_economica_direito',
-                        'Penas e Medidas Alternativas': 'penas_medidas_alternativas',
-                        'Design Institucional': 'design_institucional',
-                        'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
-                    }
-                }
+                # Busca automática da chave baseada no nome exibido
+                key = None
+                for k, info in MAPA_MATERIAS.items():
+                    if info["nome_exibido"] == materia_val and info["periodo"] == int(periodo_val[0]):
+                        key = k
+                        break
 
                 if periodo_val in mapa_local:
                     key = mapa_local[periodo_val].get(materia_val)
@@ -275,79 +322,11 @@ def view_data():
                                           'Pensamento Jurídico Brasileiro', 'Economia',
                                           'Teoria do Direito Constitucional', 'Crime e Sociedade'],
                                key='view_materia_p1')
-        map_p1 = {
-            'Teoria do Direito': 'teoria_do_direito',
-            'Teoria do Estado Democrático': 'teoria_do_estado_democratico',
-            'Pensamento Jurídico Brasileiro': 'pensamento_juridico_brasileiro',
-            'Economia': 'economia',
-            'Teoria do Direito Constitucional': 'teoria_constitucional',
-            'Crime e Sociedade': 'crime_sociedade'
-        }
-        if materia == 'Teoria do Direito':
-            st.write('Prof. Fernando Leal')
-        elif materia == 'Teoria do Estado Democrático':
-            st.write('Prof. Leandro Molhano')
-        elif materia == 'Teoria do Direito Constitucional':
-            st.write('Prof. Felipe Fonte')
-        elif materia == 'Crime e Sociedade':
-            st.write('Profs. Fernanda Prates e Thiago Bottino')
-        elif materia == 'Economia':
-            st.write('Prof. Leonardo Costa')
-        elif materia == 'Pensamento Jurídico Brasileiro':
-            st.write('Profª. Elisa Cruz')
-        key_list = map_p1.get(materia)
-        obras = st.session_state.get(key_list, [])
-        if obras:
-            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
-            for i, item in enumerate(obras, start=1):
-                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
-        else:
-            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
-    elif periodo == '2º Período':
-        materia = st.selectbox('Matéria', ['Sociologia Jurídica', 'Programação para Advogados',
-                                          'Teoria Geral do Direito Civil', 'Análise Econômica do Direito',
-                                          'Penas e Medidas Alternativas', 'Design Institucional',
-                                          'Organização do Estado e Direitos Fundamentais'],
-                               key='view_materia_p2')
-        map_p2 = {
-            'Sociologia Jurídica': 'sociologia_juridica',
-            'Programação para Advogados': 'programacao_para_advogados',
-            'Teoria Geral do Direito Civil': 'teoria_geral_direito_civil',
-            'Análise Econômica do Direito': 'analise_economica_direito',
-            'Penas e Medidas Alternativas': 'penas_medidas_alternativas',
-            'Design Institucional': 'design_institucional',
-            'Organização do Estado e Direitos Fundamentais': 'organizacao_estado_direitos_fundamentais'
-        }
-        if materia == 'Sociologia Jurídica':
-            st.write('Prof. Camila Alves')
-        elif materia == 'Programação para Advogados':
-            st.write('Prof. Josir Gomes')
-        elif materia == 'Teoria Geral do Direito Civil':
-            st.write('Prof. Filipe Medon')
-        elif materia == 'Análise Econômica do Direito':
-            st.write('Prof. Paulo Mello')
-        elif materia == 'Penas e Medidas Alternativas':
-            st.write('Prof. André Mendes')
-        elif materia == 'Design Institucional':
-            st.write('Prof. Wallace Corbo')
-        elif materia == 'Organização do Estado e Direitos Fundamentais':
-            st.write('Profs. Alvaro Palma, Gustavo Schimidt e Guilherme Aleixo')
-        key_list = map_p2.get(materia)
-        obras = st.session_state.get(key_list, [])
-        if obras:
-            st.write(f"Exibindo {len(obras)} obra(s) para {materia}:")
-            for i, item in enumerate(obras, start=1):
-                st.write(f"{i}. **{item['nome']}** — {item['autor']}")
-        else:
-            st.info(f"Nenhuma obra cadastrada em '{materia}'.")
-    else:
-        materia = st.text_input('Matéria (digite o nome da matéria)', key='view_materia_other')
-        if materia:
-            key_map = {'3º Período': 'periodo_3', '4º Período': 'periodo_4', '5º Período': 'periodo_5'}
-            key = key_map.get(periodo, None)
-            if key and key in st.session_state and materia in st.session_state[key]:
-                for item in st.session_state[key][materia]:
-                    st.write(f"Nome: {item['nome']}, Autor: {item['autor']}")
+        for key, info in MAPA_MATERIAS.items():
+          if info["nome_exibido"] == materia and info["periodo"] == int(periodo[0]):
+            st.write(f"Professor: {info['professor']}")
+            obras = st.session_state.get(key, [])
+
 
 # Botões principais (mantidos no fim como no seu código)
 st.subheader('O que você deseja fazer?')
@@ -398,25 +377,9 @@ def stats():
     # Monta o contador
     contagem = {}
 
-    # Listas fixas (mapeando chave -> nome exibido)
-    mapa_nomes = {
-        'teoria_do_direito': 'Teoria do Direito',
-        'teoria_do_estado_democratico': 'Teoria do Estado Democrático',
-        'pensamento_juridico_brasileiro': 'Pensamento Jurídico Brasileiro',
-        'economia': 'Economia',
-        'teoria_constitucional': 'Teoria do Direito Constitucional',
-        'crime_sociedade': 'Crime e Sociedade',
-        'sociologia_juridica': 'Sociologia Jurídica',
-        'programacao_para_advogados': 'Programação para Advogados',
-        'teoria_geral_direito_civil': 'Teoria Geral do Direito Civil',
-        'analise_economica_direito': 'Análise Econômica do Direito',
-        'penas_medidas_alternativas': 'Penas e Medidas Alternativas',
-        'design_institucional': 'Design Institucional',
-        'organizacao_estado_direitos_fundamentais': 'Organização do Estado e Direitos Fundamentais'
-    }
+    for key, info in MAPA_MATERIAS.items():
+        contagem[info["nome_exibido"]] = len(st.session_state.get(key, []))
 
-    for key, nome in mapa_nomes.items():
-        contagem[nome] = len(st.session_state.get(key, []))
 
     # Períodos dinâmicos
     for periodo in ['periodo_3', 'periodo_4', 'periodo_5']:
@@ -452,3 +415,4 @@ elif st.session_state.mode == 'stats':
     stats()
 else:
     st.info("Escolha 'Adicionar obra' ou 'Ver obras' acima para começar.")
+
